@@ -2,6 +2,7 @@
 """
 Academic Agentic Orchestrator
 Syncs Gmail (TeachingBox) → Google Calendar → Telegram
+AI Engine: Google Gemini 1.5 Flash
 """
 
 import os
@@ -9,7 +10,7 @@ import json
 import base64
 import re
 import pytz
-import anthropic
+import google.generativeai as genai
 from datetime import datetime, timedelta
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
@@ -20,7 +21,9 @@ import requests
 ISRAEL_TZ = pytz.timezone("Asia/Jerusalem")
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 CHAT_ID = os.environ["CHAT_ID"]
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
+
+genai.configure(api_key=GEMINI_API_KEY)
 
 LECTURER_MAP = {
     "רמי אלקיים": "מעבדת מכניקה",
@@ -115,8 +118,15 @@ def mark_as_read(gmail, msg_id: str):
 
 
 # ─── AI Analysis ─────────────────────────────────────────────────────────────
-def analyze_email_with_claude(email: dict) -> dict:
-    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+def analyze_email_with_gemini(email: dict) -> dict:
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        generation_config=genai.GenerationConfig(
+            response_mime_type="application/json",
+            max_output_tokens=512,
+            temperature=0.1,
+        ),
+    )
 
     lecturer_list = "\n".join(f"- {k} → {v}" for k, v in LECTURER_MAP.items())
     prompt = f"""אתה עוזר אקדמי. נתח את האימייל הבא וזהה:
@@ -136,7 +146,7 @@ def analyze_email_with_claude(email: dict) -> dict:
 גוף:
 {email['body'][:2000]}
 
-ענה JSON בלבד, ללא טקסט נוסף:
+ענה JSON בלבד בפורמט הבא:
 {{
   "action": "cancellation|update|delay|ignore",
   "lecturer": "שם המרצה",
@@ -145,13 +155,8 @@ def analyze_email_with_claude(email: dict) -> dict:
   "change_details": "תיאור השינוי"
 }}"""
 
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=512,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    raw = message.content[0].text.strip()
-    # Strip markdown code fences if present
+    response = model.generate_content(prompt)
+    raw = response.text.strip()
     raw = re.sub(r"^```[a-z]*\n?", "", raw).rstrip("```").strip()
     return json.loads(raw)
 
@@ -242,9 +247,9 @@ def process_emails():
     for email in emails:
         print(f"Processing: {email['subject']}")
         try:
-            analysis = analyze_email_with_claude(email)
+            analysis = analyze_email_with_gemini(email)
         except Exception as e:
-            print(f"Claude analysis failed: {e}")
+            print(f"Gemini analysis failed: {e}")
             continue
 
         action = analysis.get("action", "ignore")
