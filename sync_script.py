@@ -511,45 +511,62 @@ def process_deliveries(gmail) -> list:
             
     return processed_ids
 # =============================================================================
-# ─── AGENT 5: SMART MAINTENANCE & TRASH (סוכן התחזוקה החכם) ──────────────────
+# ─── AGENT 5: SMART MAINTENANCE & TRASH (סוכן התחזוקה - סריקה מלאה) ──────────
 # =============================================================================
 def fetch_potential_trash(gmail) -> list[dict]:
-    # מחפש בספאם, בקידומי מכירות, ומיילים כלליים של פרסומות
-    query = f'in:anywhere (label:spam OR category:promotions OR "פרסומת" OR "מבצע") -label:{LABEL_NAME}'
+    # מחפש בספאם, קידומי מכירות, ומיילים עם מילות מפתח שיווקיות
+    query = f'in:anywhere (label:spam OR category:promotions OR category:updates OR "פרסומת" OR "מבצע" OR "Sale") -label:{LABEL_NAME}'
     print(f"🧹 DEBUG: Searching for potential trash with query: {query}")
     
-    result = gmail.users().messages().list(userId="me", q=query, maxResults=50).execute()
-    messages = result.get("messages", [])
-    
     emails = []
-    for msg in messages:
-        try:
-            # format="metadata" מושך בבטחה רק את הכותרות בלי לקרוס על תוכן חסר
-            full = gmail.users().messages().get(userId="me", id=msg["id"], format="metadata").execute()
-            headers = {h["name"]: h["value"] for h in full.get("payload", {}).get("headers", [])}
-            emails.append({
-                "id": msg["id"], 
-                "subject": headers.get("Subject", "ללא נושא"),
-                "from": headers.get("From", ""),
-                "snippet": full.get("snippet", "")
-            })
-        except Exception as e:
-            print(f"⚠️ Error fetching metadata for {msg['id']}: {e}")
+    page_token = None
+    
+    # לולאה שרצה על כל העמודים בג'ימייל עד שהיא אוספת את הכל
+    while True:
+        result = gmail.users().messages().list(userId="me", q=query, maxResults=500, pageToken=page_token).execute()
+        messages = result.get("messages", [])
+        
+        for msg in messages:
+            try:
+                full = gmail.users().messages().get(userId="me", id=msg["id"], format="metadata").execute()
+                headers = {h["name"]: h["value"] for h in full.get("payload", {}).get("headers", [])}
+                emails.append({
+                    "id": msg["id"], 
+                    "subject": headers.get("Subject", "ללא נושא"),
+                    "from": headers.get("From", ""),
+                    "snippet": full.get("snippet", "")
+                })
+            except Exception as e:
+                print(f"⚠️ Error fetching metadata for {msg['id']}: {e}")
+        
+        # בודקים אם יש עוד עמוד של תוצאות מגוגל
+        page_token = result.get("nextPageToken")
+        if not page_token:
+            break # סיימנו לסרוק הכל!
+            
+        # חסם ביטחון: לא סורקים יותר מ-500 מיילים בריצה אחת כדי שהשרת לא יקרוס
+        if len(emails) >= 500:
+            print("🛑 Reached 500 emails limit for a single run to prevent GitHub timeout. Will continue tomorrow.")
+            break
+            
     return emails
 
 def analyze_trash_priority(email: dict) -> str:
-    # רשימת הלבנה - שולחים שלעולם לא נמחוק
-    whitelist = ["amazon", "10bis", "carrefour", "teachingbox", "bank", "moodle"]
+    # רשימת הלבנה מצומצמת - שולחים שלעולם לא נמחוק (אמזון לא כאן כדי שנוכל למחוק פרסומות שלהם)
+    whitelist = ["teachingbox", "bank", "moodle", "afeka"]
     sender_lower = email['from'].lower()
     
     if any(word in sender_lower for word in whitelist):
-        return "keep" # חסינות אוטומטית
+        return "keep" 
 
-    prompt = f"""אתה מנהל ניקיון לתיבת מייל. החלט אם המייל הוא זבל שיווקי למחיקה או מייל חשוב.
-    מחק (delete): ניוזלטרים, פרסומות, 'הזדמנות אחרונה', ספאם סיני.
-    שמור (keep): קבלות, הזמנות, בנקים, לימודים, אישי.
+    prompt = f"""אתה מנהל ניקיון קשוח לתיבת מייל. עליך להחליט אם המייל הוא זבל שיווקי או מייל תפעולי חשוב.
+    
+    חוקי המחיקה:
+    - מחק (delete): כל סוג של פרסומת, הצעה, שיווק, ניוזלטר, "הזדמנות אחרונה", עדכוני מערכת שיווקיים (כמו Analyst Ratings או Amazon Business).
+    - מחק (delete): גם אם השולח הוא אמזון (Amazon), עלי אקספרס או קרפור - אם המייל הוא שיווקי ולא קבלה על קנייה, מחק אותו!
+    - שמור (keep): אך ורק קבלות על כסף ששולם (Receipt/Invoice), אישורי הזמנה (Order Confirmation), ומיילים אישיים/אקדמיים.
 
-    מייל:
+    פרטי המייל:
     שולח: {email['from']}
     נושא: {email['subject']}
     תקציר: {email['snippet']}
@@ -570,20 +587,21 @@ def analyze_trash_priority(email: dict) -> str:
         return "keep"
 
 def process_maintenance(gmail) -> list:
-    print("🧹 Starting Smart Maintenance Agent...")
+    print("🧹 Starting Aggressive Maintenance Agent (Full Scan)...")
     emails = fetch_potential_trash(gmail)
     processed_ids = []
+    
+    print(f"📊 Found {len(emails)} potential trash emails to process.")
     
     for email in emails:
         decision = analyze_trash_priority(email)
         
         if decision == "delete":
-            print(f"🗑️ Deleting redundant email: {email['subject']}")
-            # מעביר את המייל לתיקיית האשפה (Trash)
+            print(f"🗑️ Deleting marketing/spam: {email['subject']}")
             gmail.users().messages().trash(userId="me", id=email["id"]).execute()
             processed_ids.append(email["id"])
         else:
-            print(f"💎 Keeping potentially useful email: {email['subject']}")
+            print(f"💎 Keeping important email: {email['subject']}")
             processed_ids.append(email["id"])
             
     return processed_ids
@@ -593,7 +611,6 @@ def process_maintenance(gmail) -> list:
 # =============================================================================
 if __name__ == "__main__":
     try:
-        # 1. התחברות לגוגל
         gmail_service, calendar_service = get_google_services()
         ensure_label_exists(gmail_service)
         
@@ -601,16 +618,16 @@ if __name__ == "__main__":
         
         all_processed = []
         
-        # 2. קודם כל - מנקים את הזבל מהתיבה! (Agent 5)
+        # 1. קודם כל מנקים את הזבל מהתיבה!
         all_processed.extend(process_maintenance(gmail_service))
         
-        # 3. הרצת שאר הסוכנים (Agents 1-4)
+        # 2. הרצת שאר הסוכנים על תיבה נקייה
         all_processed.extend(process_coupons(gmail_service))
         all_processed.extend(process_utility_bills(gmail_service))
         all_processed.extend(process_deliveries(gmail_service))
         all_processed.extend(process_emails(gmail_service, calendar_service))
         
-        # 4. חתימה סופית - מניעת סריקה כפולה מחר
+        # 3. חתימה סופית - מניעת סריקה כפולה מחר
         unique_processed_ids = set(all_processed)
         for msg_id in unique_processed_ids:
             mark_as_read(gmail_service, msg_id)
@@ -619,3 +636,4 @@ if __name__ == "__main__":
         
     except Exception as e:
         print(f"❌ Fatal error in main execution: {e}")
+
