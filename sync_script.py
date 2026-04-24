@@ -598,7 +598,7 @@ if __name__ == "__main__":
         all_processed = []
         
         # 1. קודם כל מנקים את הזבל מהתיבה
-        all_processed.extend(process_marketing(gmail_service))
+        all_processed.extend(process_maintenance(gmail_service))
         
         # 2. אחר כך מפעילים את שאר הסוכנים
         all_processed.extend(process_coupons(gmail_service))
