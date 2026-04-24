@@ -294,8 +294,8 @@ def process_emails(gmail, calendar) -> list:
 # ─── AGENT 2: COUPONS (10Bis & Carrefour) ────────────────────────────────────
 # =============================================================================
 def fetch_coupon_emails(gmail) -> list[dict]:
-    # הרחבנו את החיפוש שיכלול את כל תן ביס, קרפור והתוויות
-    query = f'(label:"קופוננים קארפור" OR from:carrefour.co.il OR from:10bis.co.il OR "תן ביס") -label:{LABEL_NAME}'
+    # הוספנו את המילה "קרפור" לחיפוש הכללי כדי שלא יפספס כלום
+    query = f'(label:"קופוננים קארפור" OR "קרפור" OR from:carrefour.co.il OR from:10bis.co.il OR "תן ביס") -label:{LABEL_NAME}'
     result = gmail.users().messages().list(userId="me", q=query, maxResults=50).execute()
     messages = result.get("messages", [])
     emails = []
@@ -438,8 +438,8 @@ def fetch_delivery_emails(gmail) -> list[dict]:
         'OR "משלוח" OR "הזמנה" OR "נשלחה" OR "מספר מעקב" OR "הגיעה") '
         'OR from:(amazon OR aliexpress OR shein OR temo OR iherb OR myprotein)'
     )
-    # הוספנו חסימה מוחלטת למיילים שהנושא שלהם מכיל "פרסומת" או "מבצע"
-    query = f'({keywords}) -subject:"פרסומת" -subject:"מבצע" -label:{LABEL_NAME}'
+    # הוספנו חסימה מפורשת לקרפור ותן-ביס כדי שלא יכנסו לפה
+    query = f'({keywords}) -subject:"פרסומת" -subject:"מבצע" -from:carrefour -from:10bis -label:{LABEL_NAME}'
     print(f"📦 DEBUG: Searching for delivery updates with query: {query}")
     result = gmail.users().messages().list(userId="me", q=query, maxResults=30).execute()
     messages = result.get("messages", [])
@@ -494,8 +494,10 @@ def process_deliveries(gmail) -> list:
             )
 
             buttons = []
-            if res.get('tracking_url') and res['tracking_url'] != "לא נמצא":
-                track_url = res['tracking_url'].replace("[NUMBER]", str(res.get('tracking_number', '')))
+            # התיקון: בודקים שהקישור באמת מתחיל ב-http לפני שמייצרים כפתור
+            tracking_url = str(res.get('tracking_url', ''))
+            if tracking_url.startswith("http"):
+                track_url = tracking_url.replace("[NUMBER]", str(res.get('tracking_number', '')))
                 buttons.append([{"text": "🔗 עקוב אחר החבילה", "url": track_url}])
             
             gmail_link = f"https://mail.google.com/mail/u/0/#inbox/{email['id']}"
