@@ -510,18 +510,27 @@ def process_deliveries(gmail) -> list:
             print(f"❌ Error in Delivery Agent: {e}")
             
     return processed_ids
+# הגדרת התווית החדשה בראש הקוד (תוסיף את זה ליד ההגדרות האחרות)
+CLEANER_LABEL_NAME = "Maintenance_Processed"
+
 # =============================================================================
-# ─── AGENT 5: SMART MAINTENANCE & TRASH (סוכן התחזוקה - סריקה מלאה) ──────────
+# ─── AGENT 5: SMART MAINTENANCE & DEEP CLEAN (גרסת הפרדה מלאה) ─────────────
 # =============================================================================
+def ensure_cleaner_label_exists(gmail):
+    """מוודא שקיימת תווית נפרדת לניקוי"""
+    results = gmail.users().labels().list(userId='me').execute()
+    for label in results.get('labels', []):
+        if label['name'] == CLEANER_LABEL_NAME:
+            return label['id']
+    return gmail.users().labels().create(userId='me', body={'name': CLEANER_LABEL_NAME}).execute()['id']
+
 def fetch_potential_trash(gmail) -> list[dict]:
-    # מחפש בספאם, קידומי מכירות, ומיילים עם מילות מפתח שיווקיות
-    query = f'in:anywhere (label:spam OR category:promotions OR category:updates OR "פרסומת" OR "מבצע" OR "Sale") -label:{LABEL_NAME}'
-    print(f"🧹 DEBUG: Searching for potential trash with query: {query}")
+    # השאילתה מחפשת זבל שטרם טופל על ידי ה"מנקה" (CLEANER_LABEL_NAME)
+    query = f'in:anywhere (label:spam OR category:promotions OR category:updates OR "פרסומת" OR "מבצע") -label:{CLEANER_LABEL_NAME}'
+    print(f"🧹 DEBUG: Searching for trash with query: {query}")
     
     emails = []
     page_token = None
-    
-    # לולאה שרצה על כל העמודים בג'ימייל עד שהיא אוספת את הכל
     while True:
         result = gmail.users().messages().list(userId="me", q=query, maxResults=500, pageToken=page_token).execute()
         messages = result.get("messages", [])
@@ -536,104 +545,66 @@ def fetch_potential_trash(gmail) -> list[dict]:
                     "from": headers.get("From", ""),
                     "snippet": full.get("snippet", "")
                 })
-            except Exception as e:
-                print(f"⚠️ Error fetching metadata for {msg['id']}: {e}")
-        
-        # בודקים אם יש עוד עמוד של תוצאות מגוגל
-        page_token = result.get("nextPageToken")
-        if not page_token:
-            break # סיימנו לסרוק הכל!
+            except: continue
             
-        # חסם ביטחון: לא סורקים יותר מ-500 מיילים בריצה אחת כדי שהשרת לא יקרוס
-        if len(emails) >= 500:
-            print("🛑 Reached 500 emails limit for a single run to prevent GitHub timeout. Will continue tomorrow.")
+        page_token = result.get("nextPageToken")
+        if not page_token or len(emails) >= 500: # מגבלה למניעת קריסת השרת
+            if page_token: print("🛑 Limit reached, will continue next run.")
             break
             
     return emails
 
-def analyze_trash_priority(email: dict) -> str:
-    # רשימת הלבנה מצומצמת - שולחים שלעולם לא נמחוק (אמזון לא כאן כדי שנוכל למחוק פרסומות שלהם)
-    whitelist = ["teachingbox", "bank", "moodle", "afeka"]
-    sender_lower = email['from'].lower()
-    
-    if any(word in sender_lower for word in whitelist):
-        return "keep" 
-
-    prompt = f"""אתה מנהל ניקיון קשוח לתיבת מייל. עליך להחליט אם המייל הוא זבל שיווקי או מייל תפעולי חשוב.
-    
-    חוקי המחיקה:
-    - מחק (delete): כל סוג של פרסומת, הצעה, שיווק, ניוזלטר, "הזדמנות אחרונה", עדכוני מערכת שיווקיים (כמו Analyst Ratings או Amazon Business).
-    - מחק (delete): גם אם השולח הוא אמזון (Amazon), עלי אקספרס או קרפור - אם המייל הוא שיווקי ולא קבלה על קנייה, מחק אותו!
-    - שמור (keep): אך ורק קבלות על כסף ששולם (Receipt/Invoice), אישורי הזמנה (Order Confirmation), ומיילים אישיים/אקדמיים.
-
-    פרטי המייל:
-    שולח: {email['from']}
-    נושא: {email['subject']}
-    תקציר: {email['snippet']}
-
-    החזר 'delete' או 'keep' בלבד."""
-
-    try:
-        url = "https://api.openai.com/v1/chat/completions"
-        headers = {"Authorization": f"Bearer {OPENAI_API_KEY.strip()}", "Content-Type": "application/json"}
-        payload = {
-            "model": "gpt-4o-mini",
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0
-        }
-        response = requests.post(url, json=payload, headers=headers)
-        return response.json()['choices'][0]['message']['content'].strip().lower()
-    except:
-        return "keep"
-
 def process_maintenance(gmail) -> list:
-    print("🧹 Starting Aggressive Maintenance Agent (Full Scan)...")
+    print("🧹 Starting DEEP CLEAN (Maintenance Mode)...")
+    label_id = ensure_cleaner_label_exists(gmail)
     emails = fetch_potential_trash(gmail)
+    
     processed_ids = []
-    
-    print(f"📊 Found {len(emails)} potential trash emails to process.")
-    
     for email in emails:
-        decision = analyze_trash_priority(email)
+        # כאן ה-AI מחליט
+        decision = analyze_trash_priority(email) # משתמש בפונקציית הניתוח הקיימת
         
         if decision == "delete":
-            print(f"🗑️ Deleting marketing/spam: {email['subject']}")
+            print(f"🗑️ Deleting: {email['subject']}")
+            # מעביר לסל מחזור ומוסיף תווית ניקוי
+            gmail.users().messages().modify(userId="me", id=email["id"], body={"addLabelIds": [label_id]}).execute()
             gmail.users().messages().trash(userId="me", id=email["id"]).execute()
-            processed_ids.append(email["id"])
         else:
-            print(f"💎 Keeping important email: {email['subject']}")
-            processed_ids.append(email["id"])
-            
+            print(f"💎 Keeping: {email['subject']}")
+            # רק מוסיף תווית ניקוי כדי שלא ייסרק שוב על ידי המנקה
+            gmail.users().messages().modify(userId="me", id=email["id"], body={"addLabelIds": [label_id]}).execute()
+        
+        processed_ids.append(email["id"])
     return processed_ids
 
 # =============================================================================
-# ─── MAIN EXECUTION (מנוע ההרצה הראשי) ───────────────────────────────────────
+# ─── MAIN EXECUTION (מעודכן עם הפרדת תוויות) ─────────────────────────────────
 # =============================================================================
 if __name__ == "__main__":
     try:
         gmail_service, calendar_service = get_google_services()
-        ensure_label_exists(gmail_service)
+        ensure_label_exists(gmail_service) # תווית רגילה
+        ensure_cleaner_label_exists(gmail_service) # תווית ניקוי
         
-        print("--- Agentic Orchestrator v2: Starting Run ---")
+        print("--- Starting Agentic Run ---")
         
-        all_processed = []
+        # 1. הרצת סוכן הניקוי (משתמש בתווית Maintenance_Processed)
+        process_maintenance(gmail_service)
         
-        # 1. קודם כל מנקים את הזבל מהתיבה!
-        all_processed.extend(process_maintenance(gmail_service))
+        # 2. הרצת שאר הסוכנים (משתמשים בתווית Processed_By_Bot)
+        # הם ירוצו רק על מה שסוכן הניקוי השאיר ב-Inbox
+        all_info_processed = []
+        all_info_processed.extend(process_coupons(gmail_service))
+        all_info_processed.extend(process_utility_bills(gmail_service))
+        all_info_processed.extend(process_deliveries(gmail_service))
+        all_info_processed.extend(process_emails(gmail_service, calendar_service))
         
-        # 2. הרצת שאר הסוכנים על תיבה נקייה
-        all_processed.extend(process_coupons(gmail_service))
-        all_processed.extend(process_utility_bills(gmail_service))
-        all_processed.extend(process_deliveries(gmail_service))
-        all_processed.extend(process_emails(gmail_service, calendar_service))
-        
-        # 3. חתימה סופית - מניעת סריקה כפולה מחר
-        unique_processed_ids = set(all_processed)
-        for msg_id in unique_processed_ids:
+        # 3. חתימה סופית של סוכני המידע
+        unique_info_ids = set(all_info_processed)
+        for msg_id in unique_info_ids:
             mark_as_read(gmail_service, msg_id)
             
-        print(f"🏁 Finished all sync tasks. Cleaned and processed {len(unique_processed_ids)} emails.")
+        print(f"🏁 Finished. Info Agents processed {len(unique_info_ids)} items.")
         
     except Exception as e:
-        print(f"❌ Fatal error in main execution: {e}")
-
+        print(f"❌ Fatal error: {e}")
