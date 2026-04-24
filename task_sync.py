@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Sidor Avoda Maor — Task & Calendar Sync
-- tasks  → Google Tasks
-- events → Google Calendar
+- tasks  → Google Calendar (all-day events)
+- events → Google Calendar (timed events)
 Runs twice daily via GitHub Actions (10:00 & 22:00 Israel time).
 """
 
@@ -15,8 +15,6 @@ import pytz
 import requests
 from openai import OpenAI
 from google.oauth2.service_account import Credentials as SACredentials
-from google.oauth2.credentials import Credentials as OAuthCredentials
-from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
 logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s", level=logging.INFO)
@@ -137,32 +135,19 @@ def add_calendar_event(parsed: dict) -> str:
     return f"{parsed['date']} {parsed['start_time']}–{end_dt.strftime('%H:%M')}"
 
 
-# ── Google Tasks (OAuth2) ─────────────────────────────────────────────────────
+# ── Google Calendar — all-day task ────────────────────────────────────────────
 
-def _tasks_service():
-    creds = OAuthCredentials(
-        token=None,
-        refresh_token=os.environ["GOOGLE_TASKS_REFRESH_TOKEN"],
-        client_id=os.environ["GOOGLE_CLIENT_ID"],
-        client_secret=os.environ["GOOGLE_CLIENT_SECRET"],
-        token_uri="https://oauth2.googleapis.com/token",
-        scopes=["https://www.googleapis.com/auth/tasks"],
-    )
-    creds.refresh(Request())
-    logger.info("Google Tasks token refreshed OK")
-    return build("tasks", "v1", credentials=creds)
-
-
-def add_task(parsed: dict) -> str:
-    service = _tasks_service()
+def add_task_as_allday(parsed: dict) -> str:
+    service = _calendar_service()
     date_iso = _parse_date(parsed["date"])
-    due_rfc = f"{date_iso}T00:00:00.000Z"
-    task_body = {
-        "title": parsed["title"],
-        "due": due_rfc,
+    event_body = {
+        "summary": f"📌 {parsed['title']}",
+        "start": {"date": date_iso},
+        "end":   {"date": date_iso},
+        "reminders": {"useDefault": False, "overrides": []},
     }
-    service.tasks().insert(tasklist="@default", body=task_body).execute()
-    return f"{parsed['date']} — Google Tasks"
+    service.events().insert(calendarId=CALENDAR_ID, body=event_body).execute()
+    return f"{parsed['date']} (כל היום)"
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -200,8 +185,8 @@ def main():
                 continue
             try:
                 if parsed["type"] == "task":
-                    when = add_task(parsed)
-                    added.append(f'✅ "{parsed["title"]}" — {when}')
+                    when = add_task_as_allday(parsed)
+                    added.append(f'📌 "{parsed["title"]}" — {when}')
                     logger.info(f"Task added: {parsed['title']}")
                 else:
                     when = add_calendar_event(parsed)
