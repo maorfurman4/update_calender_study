@@ -2,8 +2,8 @@ name: Academic Calendar Sync
 
 on:
   schedule:
-    - cron: "0 */8 * * *"   # Every 8 hours
-  workflow_dispatch:          # Manual trigger
+    - cron: "0 15 * * *"   # 17:00 UTC = 20:00 Israel Time (Summer)
+  workflow_dispatch:       # מאפשר הפעלה ידנית מגיטהאב מתי שתרצה
 
 jobs:
   sync:
@@ -26,7 +26,13 @@ jobs:
       - name: Run sync script
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_TOKEN_COUPONS: ${{ secrets.TELEGRAM_TOKEN_COUPONS }}
+          CHAT_ID_COUPONS: ${{ secrets.CHAT_ID_COUPONS }}
+          TELEGRAM_TOKEN_RECEIPTS: ${{ secrets.TELEGRAM_TOKEN_RECEIPTS }}
+          CHAT_ID_RECEIPTS: ${{ secrets.CHAT_ID_RECEIPTS }}
+          TELEGRAM_TOKEN_DELIVERIES: ${{ secrets.TELEGRAM_TOKEN_DELIVERIES }}
+          CHAT_ID_DELIVERIES: ${{ secrets.CHAT_ID_DELIVERIES }}
         run: python sync_script.py
