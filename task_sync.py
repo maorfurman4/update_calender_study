@@ -26,6 +26,7 @@ ISRAEL_TZ   = pytz.timezone("Asia/Jerusalem")
 BOT_TOKEN   = os.environ["TELEGRAM_TOKEN"]
 CHAT_ID     = os.environ["CHAT_ID"]
 CALENDAR_ID = os.environ.get("GOOGLE_CALENDAR_ID", "maorfurman123@gmail.com")
+TASKS_SCOPES = ["https://www.googleapis.com/auth/tasks"]
 
 openai_client = OpenAI(api_key=os.environ["OPEN_API_KEY"])
 TELEGRAM_API  = f"https://api.telegram.org/bot{BOT_TOKEN}"
@@ -140,15 +141,27 @@ def add_calendar_event(parsed: dict) -> str:
 # ── Google Tasks (OAuth2) ─────────────────────────────────────────────────────
 
 def _tasks_service():
-    creds = OAuthCredentials(
-        token=None,
-        refresh_token=os.environ["GOOGLE_TASKS_REFRESH_TOKEN"],
-        client_id=os.environ["GOOGLE_CLIENT_ID"],
-        client_secret=os.environ["GOOGLE_CLIENT_SECRET"],
-        token_uri="https://oauth2.googleapis.com/token",
-        scopes=["https://www.googleapis.com/auth/tasks"],
-    )
-    creds.refresh(Request())
+    raw = os.environ["GOOGLE_TASKS_CREDENTIALS"]
+    try:
+        info = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"GOOGLE_TASKS_CREDENTIALS is not valid JSON: {e}")
+
+    required = {"client_id", "client_secret", "refresh_token", "token_uri"}
+    missing = required - info.keys()
+    if missing:
+        raise RuntimeError(f"GOOGLE_TASKS_CREDENTIALS missing keys: {missing}")
+
+    # from_authorized_user_info correctly matches scopes and handles expiry
+    creds = OAuthCredentials.from_authorized_user_info(info, TASKS_SCOPES)
+
+    if not creds.valid:
+        try:
+            creds.refresh(Request())
+        except Exception as e:
+            raise RuntimeError(f"Token refresh failed — {e}") from e
+
+    logger.info("Google Tasks token OK")
     return build("tasks", "v1", credentials=creds)
 
 
@@ -207,7 +220,7 @@ def main():
                     logger.info(f"Event added: {parsed['title']}")
             except Exception as e:
                 logger.error(f"Failed {parsed.get('title')}: {e}")
-                failed.append(f'• "{parsed.get("title","?")}" — {str(e)[:80]}')
+                failed.append(f'• "{parsed.get("title","?")}" — {str(e)[:120]}')
 
     acknowledge_updates(updates[-1]["update_id"])
 
