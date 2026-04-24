@@ -510,13 +510,86 @@ def process_deliveries(gmail) -> list:
             print(f"❌ Error in Delivery Agent: {e}")
             
     return processed_ids
+# =============================================================================
+# ─── AGENT 5: MARKETING & SPAM CLEANER (סוכן הניקיון) ────────────────────────
+# =============================================================================
+def fetch_potential_trash(gmail) -> list[dict]:
+    # מחפש בספאם, בקידומי מכירות, ומיילים כלליים של פרסומות
+    # השתמשנו ב-in:anywhere כדי להגיע גם לתיקיית הספאם
+    query = 'in:anywhere (label:spam OR category:promotions OR "פרסומת" OR "מבצע") -label:Processed_By_Bot'
+    print(f"🧹 DEBUG: Searching for potential trash with query: {query}")
+    
+    result = gmail.users().messages().list(userId="me", q=query, maxResults=50).execute()
+    messages = result.get("messages", [])
+    
+    emails = []
+    for msg in messages:
+        full = gmail.users().messages().get(userId="me", id=msg["id"], format="minimal").execute()
+        headers = {h["name"]: h["value"] for h in full["payload"]["headers"]}
+        emails.append({
+            "id": msg["id"], 
+            "subject": headers.get("Subject", "ללא נושא"),
+            "from": headers.get("From", ""),
+            "snippet": full.get("snippet", "")
+        })
+    return emails
+    def analyze_trash_priority(email: dict) -> str:
+    # רשימת הלבנה - שולחים שלעולם לא נמחוק
+    whitelist = ["amazon", "10bis", "carrefour", "teachingbox", "bank", "moodle"]
+    sender_lower = email['from'].lower()
+    
+    if any(word in sender_lower for word in whitelist):
+        return "keep" # חסינות אוטומטית
 
+    prompt = f"""אתה מנהל ניקיון לתיבת מייל. עליך להחליט אם המייל הבא הוא "זבל שיווקי" שצריך למחוק, או מייל שחשוב לשמור (גם אם הוא נראה כמו פרסומת).
+    
+    כלל אצבע: 
+    - מחק (delete): ניוזלטרים, מבצעים יומיים, "הזדמנות אחרונה", עדכוני שיווק מסין.
+    - שמור (keep): קבלות, אישורי הזמנה, הודעות מהבנק, הודעות אקדמיות, מיילים אישיים.
+
+    פרטי המייל:
+    שולח: {email['from']}
+    נושא: {email['subject']}
+    תקציר: {email['snippet']}
+
+    החזר תשובה במילה אחת בלבד: 'delete' או 'keep'."""
+
+    try:
+        url = "https://api.openai.com/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {OPENAI_API_KEY.strip()}", "Content-Type": "application/json"}
+        payload = {
+            "model": "gpt-4o-mini",
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0
+        }
+        response = requests.post(url, json=payload, headers=headers)
+        return response.json()['choices'][0]['message']['content'].strip().lower()
+    except:
+        return "keep" # במקרה של שגיאה - לא מוחקים ליתר ביטחון
+        def process_maintenance(gmail) -> list:
+    print("🧹 Starting Smart Maintenance Agent...")
+    emails = fetch_potential_trash(gmail)
+    processed_ids = []
+    
+    for email in emails:
+        decision = analyze_trash_priority(email)
+        
+        if decision == "delete":
+            print(f"🗑️ Deleting redundant email: {email['subject']}")
+            # העברה לסל המחזור (Trash)
+            gmail.users().messages().trash(userId="me", id=email["id"]).execute()
+            processed_ids.append(email["id"])
+        else:
+            print(f"💎 Keeping potentially useful email: {email['subject']}")
+            # אנחנו לא מוחקים, אבל כן נתייג אותו כדי שלא ייסרק שוב
+            processed_ids.append(email["id"])
+            
+    return processed_ids
 # =============================================================================
 # ─── MAIN EXECUTION (מנוע ההרצה הראשי) ───────────────────────────────────────
 # =============================================================================
 if __name__ == "__main__":
     try:
-        # 1. התחברות לגוגל
         gmail_service, calendar_service = get_google_services()
         ensure_label_exists(gmail_service)
         
@@ -524,19 +597,21 @@ if __name__ == "__main__":
         
         all_processed = []
         
-        # 2. הרצת כל הסוכנים בזה אחר זה (איסוף IDs)
+        # 1. קודם כל מנקים את הזבל מהתיבה
+        all_processed.extend(process_marketing(gmail_service))
+        
+        # 2. אחר כך מפעילים את שאר הסוכנים
         all_processed.extend(process_coupons(gmail_service))
         all_processed.extend(process_utility_bills(gmail_service))
         all_processed.extend(process_deliveries(gmail_service))
         all_processed.extend(process_emails(gmail_service, calendar_service))
         
-        # 3. שלב הסיום - "חתימה" על המיילים
-        # שימוש ב-set מבטיח שאם אמזון נתפס גם במשלוחים וגם בקבלות, נחתום עליו רק פעם אחת
+        # 3. חתימה סופית
         unique_processed_ids = set(all_processed)
         for msg_id in unique_processed_ids:
             mark_as_read(gmail_service, msg_id)
             
-        print(f"🏁 All sync processes finished. Marked {len(unique_processed_ids)} emails as processed.")
+        print(f"🏁 Finished. Cleaned and processed {len(unique_processed_ids)} emails.")
         
     except Exception as e:
-        print(f"❌ Fatal error in main execution: {e}")
+        print(f"❌ Fatal error: {e}")
