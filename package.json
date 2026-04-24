@@ -1,0 +1,14 @@
+{
+  "name": "tecah-english-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Daily English words Telegram bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.67.0",
+    "openai": "^6.34.0"
+  }
+}

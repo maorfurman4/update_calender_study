@@ -1,0 +1,30 @@
+name: Daily English Words Bot
+
+on:
+  schedule:
+    - cron: "0 3 * * *"  # 06:00 IDT (UTC+3, summer) / 05:00 IST (UTC+2, winter)
+  workflow_dispatch:
+
+jobs:
+  send-daily-words:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run bot
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: node index.js
