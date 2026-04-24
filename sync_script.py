@@ -294,7 +294,8 @@ def process_emails(gmail, calendar) -> list:
 # ─── AGENT 2: COUPONS (10Bis & Carrefour) ────────────────────────────────────
 # =============================================================================
 def fetch_coupon_emails(gmail) -> list[dict]:
-    query = f'(label:"קופוננים קארפור" OR from:10bis.co.il) -label:{LABEL_NAME}'
+    # הרחבנו את החיפוש שיכלול את כל תן ביס, קרפור והתוויות
+    query = f'(label:"קופוננים קארפור" OR from:carrefour.co.il OR from:10bis.co.il OR "תן ביס") -label:{LABEL_NAME}'
     result = gmail.users().messages().list(userId="me", q=query, maxResults=50).execute()
     messages = result.get("messages", [])
     emails = []
@@ -306,13 +307,16 @@ def fetch_coupon_emails(gmail) -> list[dict]:
     return emails
 
 def analyze_coupon_with_openai(email_body: str) -> dict:
-    prompt = f"""חלץ מידע לקופון. החזר JSON בלבד:
-1. store: שם הרשת (למשל "Carrefour").
-2. code: קוד כרטיס.
-3. amount: סכום.
-4. date: תאריך קבלה (DD/MM/YYYY).
-טקסט: {email_body}
-{{ "store": "string", "code": "string", "amount": "string", "date": "string" }}"""
+    prompt = f"""חלץ מידע לקופון או שובר. החזר JSON בלבד.
+אם גילית שאין קוד קופון במייל (למשל מדובר בקבלה רגילה על הזמנת אוכל או פרסומת), החזר is_coupon: false.
+1. is_coupon: true או false.
+2. store: שם הרשת (למשל "Carrefour", "10bis", "תן ביס").
+3. code: קוד כרטיס או שובר.
+4. amount: סכום (מספר בלבד).
+5. date: תאריך קבלה (DD/MM/YYYY).
+טקסט המייל:
+{email_body}
+{{ "is_coupon": true, "store": "string", "code": "string", "amount": "string", "date": "string" }}"""
     url = "https://api.openai.com/v1/chat/completions"
     headers = {"Authorization": f"Bearer {OPENAI_API_KEY.strip()}", "Content-Type": "application/json"}
     payload = {"model": "gpt-4o-mini", "messages": [{"role": "user", "content": prompt}], "response_format": {"type": "json_object"}, "temperature": 0.1}
@@ -329,6 +333,13 @@ def process_coupons(gmail) -> list:
         print(f"📧 Processing Coupon: {email['subject']}")
         try:
             analysis = analyze_coupon_with_openai(email['body'])
+            
+            # בדיקה חכמה האם זה באמת קופון לפני ששולחים לטלגרם
+            if not analysis.get("is_coupon", True) or analysis.get("code") in [None, "", "?", "לא נמצא"]:
+                print(f"⚠️ Not a real coupon (Skipping Telegram): {email['subject']}")
+                processed_ids.append(email["id"])
+                continue
+
             msg = (f"🎟️ <b>קופון חדש!</b>\n\n🏪 <b>רשת:</b> {analysis.get('store', '?')}\n"
                    f"💰 <b>סכום:</b> ₪{analysis.get('amount', '0')}\n📅 <b>תאריך:</b> {analysis.get('date', '?')}\n"
                    f"🔑 <b>קוד:</b> <code>{analysis.get('code', '?')}</code>\n\n<i>* לחץ על הקוד כדי להעתיק</i>")
@@ -336,7 +347,6 @@ def process_coupons(gmail) -> list:
             processed_ids.append(email["id"])
         except Exception as e: print(f"❌ Error processing coupon: {e}")
     return processed_ids
-
 
 # =============================================================================
 # ─── AGENT 3: HOME UTILITIES & RECEIPTS (חשבונות וקבלות) ─────────────────────
@@ -428,7 +438,8 @@ def fetch_delivery_emails(gmail) -> list[dict]:
         'OR "משלוח" OR "הזמנה" OR "נשלחה" OR "מספר מעקב" OR "הגיעה") '
         'OR from:(amazon OR aliexpress OR shein OR temo OR iherb OR myprotein)'
     )
-    query = f'({keywords}) -label:{LABEL_NAME}'
+    # הוספנו חסימה מוחלטת למיילים שהנושא שלהם מכיל "פרסומת" או "מבצע"
+    query = f'({keywords}) -subject:"פרסומת" -subject:"מבצע" -label:{LABEL_NAME}'
     print(f"📦 DEBUG: Searching for delivery updates with query: {query}")
     result = gmail.users().messages().list(userId="me", q=query, maxResults=30).execute()
     messages = result.get("messages", [])
