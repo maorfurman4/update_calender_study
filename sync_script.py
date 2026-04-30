@@ -531,6 +531,7 @@ def analyze_trash_priority(email: dict) -> str:
         "teachingbox", "moodle", "afeka", "upapp", "wolt", "10bis", 
         "carrefour", "תן ביס", "invoice", "receipt", "order", "shipped",
         "myprotein"
+    ]
     subject_lower = email['subject'].lower()
     sender_lower = email['from'].lower()
     
