@@ -36,12 +36,12 @@
 
 ## Phase 2: Supabase — Authentication
 
-- [ ] **P2-1:** Create `lib/supabase/client.ts` (browser client) and `lib/supabase/server.ts` (server client with cookie handling)
-- [ ] **P2-2:** Create `app/(auth)/login/page.tsx` — Hebrew UI, Google OAuth button, Apple OAuth button, Facebook OAuth button, Email+Password form
-- [ ] **P2-3:** Create `app/(auth)/register/page.tsx` — name, email, password, phone (optional), role selector (owner/renter/both)
-- [ ] **P2-4:** Create `app/(auth)/forgot-password/page.tsx` + `reset-password/page.tsx`
-- [ ] **P2-5:** Create `app/auth/callback/route.ts` — handles OAuth redirect from Supabase
-- [ ] **P2-6:** Create `middleware.ts` at project root — protects `/owner`, `/admin`, `/swipe`, `/favorites` routes. Redirects unauthenticated users to `/login`
+- [x] **P2-1:** Create `lib/supabase/client.ts` (browser client) and `lib/supabase/server.ts` (server client with cookie handling)
+- [x] **P2-2:** Create `app/(auth)/login/page.tsx` — Hebrew UI, Google OAuth button, Apple OAuth button, Facebook OAuth button, Email+Password form
+- [x] **P2-3:** Create `app/(auth)/register/page.tsx` — name, email, password, phone (optional), role selector (owner/renter/both)
+- [x] **P2-4:** Create `app/(auth)/forgot-password/page.tsx` + `reset-password/page.tsx`
+- [x] **P2-5:** Create `app/auth/callback/route.ts` — handles OAuth redirect from Supabase
+- [x] **P2-6:** Create `middleware.ts` at project root — protects `/owner`, `/admin`, `/swipe`, `/favorites` routes. Redirects unauthenticated users to `/login`
 
 ---
 
