@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+/* ─── Brown & White Design System ─────────────────────────────────────────── */
+
+:root {
+  /* Brand palette */
+  --color-bg:        #FDFAF7;  /* cream white — page background      */
+  --color-surface:   #F5EFE6;  /* warm off-white — cards, panels     */
+  --color-primary:   #6B4F3A;  /* medium brown — buttons, accents    */
+  --color-dark:      #2C1810;  /* near-black brown — body text       */
+  --color-accent:    #8B6347;  /* lighter brown — hover states       */
+  --color-border:    #E8DDD4;  /* warm light — dividers, outlines    */
+  --color-muted:     #A89080;  /* muted brown — secondary text       */
+  --color-success:   #4A7C59;  /* green — bot approval               */
+  --color-error:     #9B3A3A;  /* red — bot rejection                */
+
+  /* shadcn/ui CSS variable overrides */
+  --background:       var(--color-bg);
+  --foreground:       var(--color-dark);
+  --card:             var(--color-surface);
+  --card-foreground:  var(--color-dark);
+  --primary:          var(--color-primary);
+  --primary-foreground: #FDFAF7;
+  --secondary:        var(--color-surface);
+  --secondary-foreground: var(--color-dark);
+  --muted:            var(--color-surface);
+  --muted-foreground: var(--color-muted);
+  --accent:           var(--color-accent);
+  --accent-foreground: #FDFAF7;
+  --border:           var(--color-border);
+  --input:            var(--color-border);
+  --ring:             var(--color-primary);
+  --radius:           0.75rem;
+}
+
+/* ─── Tailwind v4 Theme Integration ──────────────────────────────────────── */
+
+@theme inline {
+  --color-background:   var(--color-bg);
+  --color-foreground:   var(--color-dark);
+  --color-surface:      var(--color-surface);
+  --color-primary:      var(--color-primary);
+  --color-accent:       var(--color-accent);
+  --color-border:       var(--color-border);
+  --color-muted:        var(--color-muted);
+  --color-success:      var(--color-success);
+  --color-error:        var(--color-error);
+  --font-sans: system-ui, -apple-system, Arial, sans-serif;
+}
+
+/* ─── Base RTL Styles ─────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  /* FORBIDDEN: letter-spacing on Hebrew text — never add it */
+}
+
+html {
+  direction: rtl; /* Hebrew RTL default — overridden per element if needed */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-dark);
+  font-family: system-ui, -apple-system, Arial, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Typography — Hebrew RTL ─────────────────────────────────────────────── */
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: var(--color-dark);
+  /* No letter-spacing — Hebrew text renders poorly with it */
+}
+
+p, span, li, td, th {
+  /* No letter-spacing on any text that may be Hebrew */
+}
+
+/* ─── CSS Logical Properties — RTL-safe layout helpers ───────────────────── */
+
+.container {
+  width: 100%;
+  max-inline-size: 1280px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+/* Safe horizontal padding utility (RTL-aware) */
+.px-safe {
+  padding-inline: 1rem;
+}
+
+/* ─── Scrollbar ────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 9999px;
+}
+
+/* ─── Focus Ring ──────────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ─── Selection ──────────────────────────────────────────────────────────── */
+
+::selection {
+  background-color: var(--color-primary);
+  color: #FDFAF7;
+}
