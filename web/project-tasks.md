@@ -21,16 +21,16 @@
 
 ## Phase 1: Supabase — Database Schema & RLS
 
-- [ ] **P1-1:** Enable PostGIS extension in Supabase. Create `supabase/migrations/001_extensions.sql`
-- [ ] **P1-2:** Create `users` table (mirrors `auth.users`). Trigger: auto-insert on signup. Role field supports `owner`, `renter`, `both`, `admin`
-- [ ] **P1-3:** Create `properties` table with spatial `location GEOGRAPHY(POINT)` column, all rental/sale/roommate fields, `photos text[]` (max 10), `status`, `category`
-- [ ] **P1-4:** Create `swipes` table with `direction`, unique constraint `(user_id, property_id)`, `swiped_at` timestamp for 10-day recycle logic
-- [ ] **P1-5:** Create `bot_conversations` table: `messages jsonb[]`, `status` (in_progress/approved/rejected), `rejection_reason`, `track` (rental/sale/roommates)
-- [ ] **P1-6:** Create `leads` table (approved contacts). Create `favorites` table. Create `roommate_profiles` table (interests tags, lifestyle fields)
-- [ ] **P1-7:** Write all RLS Policies: users (own row), properties (read active OR own), swipes/favorites/leads (own only), owner sees leads on their properties
-- [ ] **P1-8:** Create Supabase Storage bucket `property-photos` with public read policy. Set 10MB file size limit per image
-- [ ] **P1-9:** Create DB indexes: `properties(category)`, `properties(status)`, `properties GIST(location)` (spatial index), `swipes(user_id, property_id)`
-- [ ] **P1-10:** Generate TypeScript types from Supabase schema → `lib/supabase/types.ts`
+- [x] **P1-1:** Enable PostGIS extension in Supabase. Create `supabase/migrations/001_extensions.sql`
+- [x] **P1-2:** Create `users` table (mirrors `auth.users`). Trigger: auto-insert on signup. Role field supports `owner`, `renter`, `both`, `admin`
+- [x] **P1-3:** Create `properties` table with spatial `location GEOGRAPHY(POINT)` column, all rental/sale/roommate fields, `photos text[]` (max 10), `status`, `category`
+- [x] **P1-4:** Create `swipes` table with `direction`, unique constraint `(user_id, property_id)`, `swiped_at` timestamp for 10-day recycle logic
+- [x] **P1-5:** Create `bot_conversations` table: `messages jsonb[]`, `status` (in_progress/approved/rejected), `rejection_reason`, `track` (rental/sale/roommates)
+- [x] **P1-6:** Create `leads` table (approved contacts). Create `favorites` table. Create `roommate_profiles` table (interests tags, lifestyle fields)
+- [x] **P1-7:** Write all RLS Policies: users (own row), properties (read active OR own), swipes/favorites/leads (own only), owner sees leads on their properties
+- [x] **P1-8:** Create Supabase Storage bucket `property-photos` with public read policy. Set 10MB file size limit per image
+- [x] **P1-9:** Create DB indexes: `properties(category)`, `properties(status)`, `properties GIST(location)` (spatial index), `swipes(user_id, property_id)`
+- [x] **P1-10:** Generate TypeScript types from Supabase schema → `lib/supabase/types.ts`
 
 ---
 
