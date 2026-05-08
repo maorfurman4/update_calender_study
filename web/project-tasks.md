@@ -15,7 +15,7 @@
 - [x] **P0-5 (merged):** `i18n/request.ts`, `next.config.ts`, `app/layout.tsx` — all completed in P0-3
 - [x] **P0-6 (merged):** `app/globals.css` — completed in P0-2
 - [x] **P0-7 (merged):** Brown & White CSS variables — completed in P0-2
-- [ ] **P0-8:** Create shared layout components: `components/shared/Navbar.tsx` (mobile bottom nav), `components/shared/PageShell.tsx`
+- [x] **P0-8:** Create `components/shared/Navbar.tsx` (mobile bottom tab bar, logical CSS, no letter-spacing), `components/shared/PageShell.tsx` (fullscreen/scroll modes, pb-16 for nav clearance). Clean `app/page.tsx` → redirect to `/swipe`. Add `app/swipe/page.tsx` placeholder with Brown & White card stack visual
 
 ---
 
