@@ -61,13 +61,13 @@
 
 ## Phase 4: Search Page + Google Maps
 
-- [ ] **P4-1:** Create `lib/maps/loader.ts` — loads Google Maps JS API once using `@googlemaps/js-api-loader`
-- [ ] **P4-2:** Create `components/search/FilterBar.tsx` — city/area text input, price range slider, room count buttons (1/2/3/4+), category tabs (rental/sale/roommates), available-from date
-- [ ] **P4-3:** Create `components/search/MapView.tsx` — renders Google Map, plots property pins, opens mini property card on pin click
-- [ ] **P4-4:** Create `components/search/PolygonTool.tsx` — freehand polygon draw mode using Google Maps Drawing Library. On polygon close: calls Supabase RPC `properties_in_polygon(geojson)` using PostGIS `ST_Within`
-- [ ] **P4-5:** Create Supabase RPC function `properties_in_polygon` — `ST_Within(location, ST_GeomFromGeoJSON($1))` filtered by category + status
-- [ ] **P4-6:** Create `components/search/ListingCard.tsx` — horizontal card with first photo, price, address, rooms, size
-- [ ] **P4-7:** Create `app/(main)/search/page.tsx` — combines FilterBar + MapView + PolygonTool + ListingCard list. URL search params sync with filters. "Browse in swipe" CTA button
+- [x] **P4-1:** Create `lib/maps/loader.ts` — loads Google Maps JS API once using `@googlemaps/js-api-loader`
+- [x] **P4-2:** Create `components/search/FilterBar.tsx` — category tabs (rental/sale/roommates), room count buttons (1/2/3/4+), polygon indicator badge, result count
+- [x] **P4-3:** Create `components/search/MapView.tsx` — renders Google Map, AdvancedMarkerElement pins, selected highlight, loading spinner overlay
+- [x] **P4-4:** Create polygon draw tool inside `MapView.tsx` — DrawingManager in POLYGON mode, turf.polygon() + turf.rewind() GeoJSON conversion, draw/clear buttons
+- [x] **P4-5:** Create Supabase RPC function `properties_in_polygon` in `002_schema.sql` — `ST_Within(location::geometry, ST_GeomFromGeoJSON(geojson))` filtered by category + status
+- [x] **P4-6:** Create `components/search/ListingCard.tsx` — horizontal card with first photo, price, address, rooms, size, total monthly, selected highlight
+- [x] **P4-7:** Create `app/search/page.tsx` — full-viewport map + sliding bottom sheet + FilterBar overlay + ListingCard list. URL search params sync with filters. "גלוש בנכסים" CTA button
 
 ---
 
