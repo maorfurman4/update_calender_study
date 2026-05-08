@@ -47,9 +47,9 @@
 
 ## Phase 3: Property Listing — Owner Side
 
-- [ ] **P3-1:** Create `app/api/upload/route.ts` — generates Supabase Storage signed upload URL. Validates user is authenticated. Returns public URL
-- [ ] **P3-2:** Create `components/shared/ImageUpload.tsx` — drag-and-drop, max 10 images, shows preview, handles upload to Supabase Storage, displays progress bar
-- [ ] **P3-3:** Create `app/owner/new/page.tsx` — multi-step form (4 steps):
+- [x] **P3-1:** Create `app/api/upload/route.ts` — generates Supabase Storage signed upload URL. Validates user is authenticated. Returns public URL
+- [x] **P3-2:** Create `components/shared/ImageUpload.tsx` — drag-and-drop, max 10 images, shows preview, handles upload to Supabase Storage, displays progress bar
+- [x] **P3-3:** Create `app/owner/new/page.tsx` — multi-step form (4 steps):
   - Step 1: Category (rental/sale/roommates), title, description, price
   - Step 2: Address via Google Places Autocomplete → auto-fills lat/lng
   - Step 3: Image upload (up to 10 photos)
