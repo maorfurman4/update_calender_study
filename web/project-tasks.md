@@ -11,10 +11,10 @@
 - [x] **P0-1:** Install all required npm packages: `@supabase/supabase-js`, `@supabase/ssr`, `next-intl`, `framer-motion`, `@googlemaps/js-api-loader`, `@turf/turf`, `openai`, `react-hook-form`, `zod`, `@hookform/resolvers`, `lucide-react`, `recharts`
 - [x] **P0-2:** Initialize shadcn/ui and add components: `button`, `card`, `input`, `label`, `form`, `dialog`, `scroll-area` — Brown & White theme applied to `globals.css`
 - [x] **P0-3:** Create `messages/he.json` — full Hebrew translation file (nav, search, swipe, bot, property fields, auth, owner, admin). Configure `i18n/request.ts`, update `next.config.ts` with next-intl plugin, rewrite `app/layout.tsx` with `lang="he" dir="rtl"`
-- [ ] **P0-4:** Create `i18n/request.ts` + update `next.config.ts` with `next-intl` plugin (RTL-first, Hebrew default)
-- [ ] **P0-5:** Create `.env.local.example` with all required environment variable keys (Supabase, OpenAI, Google Maps, Twilio)
-- [ ] **P0-6:** Update `app/layout.tsx` — set `lang="he"`, `dir="rtl"`, wrap with `NextIntlClientProvider`, apply base RTL Tailwind config
-- [ ] **P0-7:** Create `app/globals.css` — RTL base styles, CSS Logical Properties defaults, custom Tailwind theme (Airbnb-style palette: white, warm grays, coral accent)
+- [x] **P0-4:** Create `.env.local.example` — documented placeholders for Supabase (URL/anon/service_role), OpenAI, Google Maps (3 APIs), and CRON_SECRET. Fixed `.gitignore` to track `.example` but not `.env.local`
+- [x] **P0-5 (merged):** `i18n/request.ts`, `next.config.ts`, `app/layout.tsx` — all completed in P0-3
+- [x] **P0-6 (merged):** `app/globals.css` — completed in P0-2
+- [x] **P0-7 (merged):** Brown & White CSS variables — completed in P0-2
 - [ ] **P0-8:** Create shared layout components: `components/shared/Navbar.tsx` (mobile bottom nav), `components/shared/PageShell.tsx`
 
 ---
