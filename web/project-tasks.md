@@ -10,7 +10,7 @@
 
 - [x] **P0-1:** Install all required npm packages: `@supabase/supabase-js`, `@supabase/ssr`, `next-intl`, `framer-motion`, `@googlemaps/js-api-loader`, `@turf/turf`, `openai`, `react-hook-form`, `zod`, `@hookform/resolvers`, `lucide-react`, `recharts`
 - [x] **P0-2:** Initialize shadcn/ui and add components: `button`, `card`, `input`, `label`, `form`, `dialog`, `scroll-area` — Brown & White theme applied to `globals.css`
-- [ ] **P0-3:** Create `messages/he.json` — full Hebrew translation file (nav, search, swipe, bot, property fields, auth, owner, admin)
+- [x] **P0-3:** Create `messages/he.json` — full Hebrew translation file (nav, search, swipe, bot, property fields, auth, owner, admin). Configure `i18n/request.ts`, update `next.config.ts` with next-intl plugin, rewrite `app/layout.tsx` with `lang="he" dir="rtl"`
 - [ ] **P0-4:** Create `i18n/request.ts` + update `next.config.ts` with `next-intl` plugin (RTL-first, Hebrew default)
 - [ ] **P0-5:** Create `.env.local.example` with all required environment variable keys (Supabase, OpenAI, Google Maps, Twilio)
 - [ ] **P0-6:** Update `app/layout.tsx` — set `lang="he"`, `dir="rtl"`, wrap with `NextIntlClientProvider`, apply base RTL Tailwind config
