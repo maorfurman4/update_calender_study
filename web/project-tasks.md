@@ -95,8 +95,8 @@
 
 ## Phase 7: Favorites & User Profile
 
-- [ ] **P7-1:** Create `app/(main)/favorites/page.tsx` — grid of favorited properties (auto-favorited on right swipe). Unfavorite button. Empty state
-- [ ] **P7-2:** Create `app/(main)/profile/page.tsx` — edit name, phone, avatar upload. Role selector. Language toggle (he/en)
+- [x] **P7-1:** Create `app/favorites/page.tsx` — 2-column grid of right-swiped properties, each linking to /bot/[id]. Empty state with swipe CTA. Category chip overlay on thumbnail
+- [x] **P7-2:** Create `app/profile/page.tsx` — shadcn Tabs: (1) Profile tab: name/phone edit via ProfileForm + Yad2-style SearchPrefsForm (city, price range, rooms, parking/elevator/balcony/renovated toggles); (2) Conversations tab: ConversationList with status badges, track labels, resume/view links. Migration `004_search_preferences.sql` adds `search_preferences JSONB` column to users
 
 ---
 

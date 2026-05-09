@@ -340,6 +340,7 @@ export type Database = {
           name: string
           phone: string | null
           role: string
+          search_preferences: Json | null
         }
         Insert: {
           avatar_url?: string | null
@@ -349,6 +350,7 @@ export type Database = {
           name?: string
           phone?: string | null
           role?: string
+          search_preferences?: Json | null
         }
         Update: {
           avatar_url?: string | null
@@ -358,6 +360,7 @@ export type Database = {
           name?: string
           phone?: string | null
           role?: string
+          search_preferences?: Json | null
         }
         Relationships: []
       }
@@ -507,3 +510,15 @@ export type PropertyStatus   = "active" | "paused" | "sold"
 export type BotTrack         = "rental" | "sale" | "roommates"
 export type BotStatus        = "in_progress" | "approved" | "rejected"
 export type SwipeDirection   = "left" | "right"
+
+// Yad2-style default search preferences stored as JSONB in users.search_preferences
+export interface SearchPreferences {
+  city?:      string   // free-text city or neighbourhood (e.g. "תל אביב")
+  minPrice?:  number   // ₪
+  maxPrice?:  number   // ₪
+  minRooms?:  number   // 1 | 2 | 3 | 4
+  parking?:   boolean
+  elevator?:  boolean
+  balcony?:   boolean
+  renovated?: boolean
+}
