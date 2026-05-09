@@ -80,7 +80,7 @@ export function MapView({
   const mapRef = useRef<google.maps.Map | null>(null)
   const drawingRef = useRef<google.maps.drawing.DrawingManager | null>(null)
   const activePolygonRef = useRef<google.maps.Polygon | null>(null)
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
+  const markersRef = useRef<google.maps.Marker[]>([])
   const [isDrawing, setIsDrawing] = useState(false)
   const [hasPolygon, setHasPolygon] = useState(false)   // mirrors activePolygonRef for render
   const [mapsReady, setMapsReady] = useState(false)
@@ -91,24 +91,35 @@ export function MapView({
     if (mapRef.current || !mapDivRef.current) return
     let cancelled = false
 
+    // Catch Google Maps auth failures (invalid key / billing / restrictions)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window as any).gm_authFailure = () => {
+      console.error('[MapView] gm_authFailure — API key rejected by Google')
+      if (!cancelled) setInitError(true)
+    }
+
     async function init() {
+      // Validate API key exists before trying to load
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+      if (!apiKey) {
+        console.error('[MapView] NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is not set!')
+        if (!cancelled) setInitError(true)
+        return
+      }
+
       try {
         initMapsLoader()
         const { importLibrary } = await import('@googlemaps/js-api-loader')
-        const { Map } = (await importLibrary('maps')) as google.maps.MapsLibrary
+        const mapsLib = (await importLibrary('maps')) as google.maps.MapsLibrary
 
         if (cancelled || !mapDivRef.current) return
 
-        mapRef.current = new Map(mapDivRef.current, {
+        mapRef.current = new mapsLib.Map(mapDivRef.current, {
           center: ISRAEL_CENTER,
           zoom: DEFAULT_ZOOM,
-          mapId: 'nadlan-search-map',     // required for AdvancedMarkerElement
           disableDefaultUI: true,
           zoomControl: true,
-          zoomControlOptions: {
-            position: google.maps.ControlPosition.LEFT_BOTTOM,
-          },
-          gestureHandling: 'greedy',       // single-finger pan on mobile
+          gestureHandling: 'greedy',
           clickableIcons: false,
         })
 
@@ -128,27 +139,31 @@ export function MapView({
     if (!mapsReady || !mapRef.current) return
 
     async function renderMarkers() {
-      const { importLibrary } = await import('@googlemaps/js-api-loader')
-      const { AdvancedMarkerElement, PinElement } =
-        (await importLibrary('marker')) as google.maps.MarkerLibrary
-
-      // Clear old markers
-      markersRef.current.forEach((m) => { m.map = null })
+      // Clear old markers first
+      markersRef.current.forEach((m) => m.setMap(null))
       markersRef.current = []
 
+      if (properties.length === 0) return
+
+      // Import marker library to get Marker + SymbolPath without relying on globals
+      const { importLibrary } = await import('@googlemaps/js-api-loader')
+      const { Marker, SymbolPath } = (await importLibrary('marker')) as google.maps.MarkerLibrary & {
+        Marker: typeof google.maps.Marker
+        SymbolPath: typeof google.maps.SymbolPath
+      }
+
+      // Fallback: use google global if importLibrary doesn't expose Marker
+      // (legacy Marker lives in the core maps lib, not marker lib in some versions)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const LegacyMarker: typeof google.maps.Marker = Marker ?? (window as any).google?.maps?.Marker
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const CirclePath = SymbolPath?.CIRCLE ?? (window as any).google?.maps?.SymbolPath?.CIRCLE ?? 0
+
+      if (!LegacyMarker) return
+
       properties.forEach((prop) => {
-        // Skip properties without a location
-        // (location column is GEOGRAPHY — not directly available as lat/lng)
-        // We use a fallback: if the property has no parseable location, skip.
-        // In production the properties_in_polygon RPC returns only located props.
         if (!prop.address) return
 
-        // We don't have parsed lat/lng in the Row type (location is `unknown`).
-        // The swipe/search view creates markers from address string geocoding.
-        // For Phase 4, we place markers using a basic heuristic: all results
-        // cluster near the centre. Real geocoding is done in Phase 5 (bot).
-        // TODO Phase 5: store lat/lng as separate columns for easy JS access.
-        // For now, markers are placed at map centre + small offset per index.
         const idx = properties.indexOf(prop)
         const offset = idx * 0.002
         const position = {
@@ -158,21 +173,21 @@ export function MapView({
 
         const isSelected = prop.id === selectedId
 
-        const pin = new PinElement({
-          background: isSelected ? '#2C1810' : '#6B4F3A',
-          borderColor: isSelected ? '#6B4F3A' : '#2C1810',
-          glyphColor: '#FDFAF7',
-          scale: isSelected ? 1.3 : 1,
-        })
-
-        const marker = new AdvancedMarkerElement({
+        const marker = new LegacyMarker({
           map: mapRef.current!,
           position,
-          content: pin.element,
           title: prop.title,
+          icon: {
+            path: CirclePath,
+            scale: isSelected ? 12 : 9,
+            fillColor: isSelected ? '#2C1810' : '#6B4F3A',
+            fillOpacity: 1,
+            strokeColor: '#FDFAF7',
+            strokeWeight: 2,
+          },
         })
 
-        marker.addEventListener('click', () => onMarkerClick(prop))
+        marker.addListener('click', () => onMarkerClick(prop))
         markersRef.current.push(marker)
       })
     }
@@ -257,9 +272,15 @@ export function MapView({
 
       {/* Error state */}
       {initError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-bg)]/80">
-          <p className="text-sm text-[var(--color-muted)] text-center px-4">
-            לא ניתן לטעון את המפה.<br />בדוק את מפתח Google Maps ב-.env.local
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--color-bg)] gap-3 px-6">
+          <p className="text-2xl">🗺️</p>
+          <p className="text-sm font-semibold text-[var(--color-dark)] text-center">
+            המפה לא נטענה
+          </p>
+          <p className="text-xs text-[var(--color-muted)] text-center leading-relaxed">
+            בעיה עם מפתח Google Maps API.<br />
+            פתח את כלי המפתחים (F12) ← Console<br />
+            ושלח את השגיאה האדומה.
           </p>
         </div>
       )}

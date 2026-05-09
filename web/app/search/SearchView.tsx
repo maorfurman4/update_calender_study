@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ChevronUp, ChevronDown, Layers } from 'lucide-react'
 import { PageShell } from '@/components/shared/PageShell'
 import { MapView } from '@/components/search/MapView'
+import { MapErrorBoundary } from '@/components/search/MapErrorBoundary'
 import { FilterBar, type ActiveFilters } from '@/components/search/FilterBar'
 import { ListingCard } from '@/components/search/ListingCard'
 import { searchPropertiesInPolygon, searchPropertiesFiltered } from '@/lib/properties/search'
@@ -133,14 +134,18 @@ export function SearchView() {
       <div className="relative w-full h-full overflow-hidden">
 
         {/* ── Map layer (fills entire content area) ──────────────────────── */}
-        <MapView
-          properties={properties}
-          selectedId={selectedId}
-          onMarkerClick={handleMarkerClick}
-          onPolygonComplete={handlePolygonComplete}
-          onPolygonClear={handlePolygonClear}
-          isLoading={isPending}
-        />
+        <div className="absolute inset-0">
+          <MapErrorBoundary>
+            <MapView
+              properties={properties}
+              selectedId={selectedId}
+              onMarkerClick={handleMarkerClick}
+              onPolygonComplete={handlePolygonComplete}
+              onPolygonClear={handlePolygonClear}
+              isLoading={isPending}
+            />
+          </MapErrorBoundary>
+        </div>
 
         {/* ── FilterBar — floating top overlay ───────────────────────────── */}
         <div className="absolute top-0 start-0 end-0 z-10 pointer-events-none px-3 pt-3">
