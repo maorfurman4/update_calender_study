@@ -1,0 +1,54 @@
+{
+  "name": "נדלן — דירות בישראל",
+  "short_name": "נדלן",
+  "description": "מצא את הדירה שלך בקלות — השכרה, מכירה ושותפים בישראל",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FDFAF7",
+  "theme_color": "#6B4F3A",
+  "lang": "he",
+  "dir": "rtl",
+  "scope": "/",
+  "categories": ["real estate", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "חיפוש דירות",
+      "short_name": "חיפוש",
+      "url": "/search",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "גלישת דירות",
+      "short_name": "גלישה",
+      "url": "/swipe",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
