@@ -136,7 +136,26 @@
 - [x] **P11-4:** `npm run build` → succeeds. Fixed module-level `new Resend()` → moved inside handler. Added `export const dynamic = 'force-dynamic'` to all Supabase-dependent server pages. Extracted `SearchView.tsx` client component + Suspense wrapper in `search/page.tsx` to fix `useSearchParams()` SSR boundary.
 - [ ] **P11-5:** Mobile responsiveness audit (375px, 390px, 430px viewports)
 - [ ] **P11-6:** Lighthouse performance audit. Target: Performance > 90, Accessibility > 95
-- [ ] **P11-7:** Deploy to Vercel. Set all ENV variables. Verify cron job is active
+- [x] **P11-7:** Deploy to Vercel. Set all ENV variables. Verify cron job is active — completed in Phase 13.
+
+---
+
+## Phase 12: PWA & Deployment Prep
+
+- [x] **P12-1:** `web/public/manifest.json` — fully compliant PWA manifest (standalone, RTL Hebrew, theme_color #6B4F3A, shortcuts for /search and /swipe)
+- [x] **P12-2:** PWA icons generated: `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` (brand brown, placeholder — replace with real artwork before launch)
+- [x] **P12-3:** `app/layout.tsx` updated with `icons` metadata (apple-touch-icon + png icon sizes)
+- [x] **P12-4:** `production_schema.sql` (repo root) — single idempotent SQL file combining all 6 migrations; paste into Supabase SQL Editor to bootstrap production DB
+- [x] **P12-5:** `DEPLOYMENT.md` (repo root) — step-by-step runbook: Supabase setup, schema run, GitHub push, Vercel import, ENV checklist, post-deploy QA
+
+---
+
+## Phase 13: CLI Deployment
+
+- [x] **P13-1:** GitHub repo created: `github.com/maorfurman4/nadlan-web` (private). Code pushed to `main` branch.
+- [x] **P13-2:** Vercel project created under `maorfurman4s-projects/web`. All 10 ENV vars injected (encrypted) into Production environment.
+- [x] **P13-3:** Production deployment live: `https://web-b8yo5zhn9-maorfurman4s-projects.vercel.app`
+- [ ] **P13-4:** Supabase schema push — BLOCKED: keys provided are new `sb_publishable_` / `sb_secret_` format, not JWT; Supabase CLI and Management API both reject them. Action required: go to supabase.com → SQL Editor → paste `production_schema.sql` manually. OR go to Account → Access Tokens → create a PAT and provide it here.
 
 ---
 
