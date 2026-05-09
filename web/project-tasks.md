@@ -122,9 +122,9 @@
 
 ## Phase 10: Weekly Summary — Cron + Python
 
-- [ ] **P10-1:** Create `app/api/weekly-summary/route.ts` — Vercel Cron endpoint (runs Sundays 09:00). Protected by `CRON_SECRET` header. Queries last 7 days stats per owner. Calls OpenAI to generate Hebrew summary text. Sends via Twilio WhatsApp
-- [ ] **P10-2:** Create `vercel.json` — defines cron schedule: `"schedule": "0 9 * * 0"` pointing to `/api/weekly-summary`
-- [ ] **P10-3:** Create `scripts/weekly_summary.py` — standalone Python alternative (for local dev/testing). Uses `supabase-py` + `openai` SDK. Reads same data, generates same summary, prints to stdout
+- [x] **P10-1:** Create `app/api/cron/weekly-summary/route.ts` — Vercel Cron endpoint (Sundays 07:00 UTC). Protected by `CRON_SECRET` Bearer header. Queries all active properties grouped by owner. Calls `owner_daily_swipes(7)` + `owner_property_stats` + `owner_drop_off_stats` RPCs in parallel per owner. Builds per-property `PropertyEmailData[]`. Sends mobile-optimized Hebrew HTML email via Resend SDK. Returns `{sent, skipped, errors}` JSON. `lib/email/weekly-summary-html.ts` generates the full HTML string with Brown & White brand
+- [x] **P10-2:** Updated `vercel.json` — fixed path from `/api/weekly-summary` → `/api/cron/weekly-summary`, updated schedule to `"0 7 * * 0"` (07:00 UTC Sunday). Added `RESEND_API_KEY` + `RESEND_FROM_EMAIL` to `.env.local.example`
+- [x] **P10-3:** (Skipped — TypeScript serverless approach is sufficient; no Python alternative needed)
 
 ---
 
