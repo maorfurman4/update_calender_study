@@ -1,41 +1,80 @@
+import { Suspense } from 'react'
 import { PageShell } from '@/components/shared/PageShell'
+import { SwipeDeck } from '@/components/swipe/SwipeDeck'
+import { fetchSwipeFeed } from '@/lib/swipe/actions'
+import type { PropertyCategory } from '@/lib/supabase/types'
+
+interface SwipePageProps {
+  searchParams: Promise<{
+    category?: string
+    minRooms?: string
+  }>
+}
 
 /**
- * Swipe feed — placeholder until Phase 5 (Swipe UI).
- * Renders full-screen shell so the Navbar and layout can be validated.
+ * SwipePage — full-viewport swipe feed.
+ *
+ * This is a Server Component that pre-fetches the initial deck server-side
+ * (no loading flash on first paint) and passes the array to the client-side
+ * SwipeDeck for gesture handling.
+ *
+ * URL params:
+ *   ?category=rental|sale|roommates  — filter by category
+ *   ?minRooms=1|2|3|4               — minimum room count
+ *
+ * These are set by the "גלוש בנכסים" CTA in the Search page.
  */
-export default function SwipePage() {
+export default async function SwipePage({ searchParams }: SwipePageProps) {
+  const params = await searchParams
+  const category = params.category as PropertyCategory | undefined
+  const minRooms = params.minRooms ? Number(params.minRooms) : undefined
+
+  const { properties } = await fetchSwipeFeed({ category, minRooms, limit: 30 })
+
   return (
-    // fullscreen=true: no scroll, viewport-height content area
-    // This is the final mode once SwipeStack cards are mounted.
     <PageShell fullscreen>
-      <div className="flex flex-col items-center justify-center h-full gap-4 px-6">
-        {/* App wordmark — no letter-spacing on Hebrew */}
-        <h1
-          className="text-4xl font-bold text-[var(--color-primary)]"
-        >
+      {/* Header bar */}
+      <div className="flex items-center justify-between px-5 pt-4 pb-2 shrink-0">
+        <h1 className="text-xl font-bold text-[var(--color-primary)]">
           נדל״ן
         </h1>
-        <p className="text-[var(--color-muted)] text-sm text-center">
-          כרטיסי הנכסים יופיעו כאן בשלב 5
-        </p>
+        {/* Category badge (if filtered) */}
+        {category && (
+          <span className="rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] px-3 py-1 text-xs font-medium text-[var(--color-dark)]">
+            {category === 'rental'
+              ? 'השכרה'
+              : category === 'sale'
+              ? 'מכירה'
+              : 'שותפים'}
+          </span>
+        )}
+      </div>
 
-        {/* Visual placeholder for swipe card stack */}
-        <div className="relative w-72 h-96 mt-4">
-          {[2, 1, 0].map((offset) => (
-            <div
-              key={offset}
-              className="absolute inset-0 rounded-2xl border border-[var(--color-border)]"
-              style={{
-                backgroundColor: 'var(--color-surface)',
-                transform: `scale(${1 - offset * 0.03}) translateY(${offset * -10}px)`,
-                zIndex: 3 - offset,
-                boxShadow: '0 4px 24px 0 rgba(44,24,16,0.08)',
-              }}
-            />
-          ))}
-        </div>
+      {/* Deck — fills remaining viewport height */}
+      <div className="flex-1 relative overflow-hidden">
+        <Suspense fallback={<DeckSkeleton />}>
+          <SwipeDeck initialProperties={properties} />
+        </Suspense>
       </div>
     </PageShell>
+  )
+}
+
+// ─── Loading skeleton (shown by Suspense while feed resolves) ─────────────────
+
+function DeckSkeleton() {
+  return (
+    <div className="relative mx-4 mt-3 h-[calc(100%-7rem)]">
+      {[2, 1, 0].map((offset) => (
+        <div
+          key={offset}
+          className="absolute inset-0 rounded-2xl bg-[var(--color-surface)] animate-pulse border border-[var(--color-border)]"
+          style={{
+            transform: `scale(${1 - offset * 0.04}) translateY(${offset * -10}px)`,
+            zIndex: 3 - offset,
+          }}
+        />
+      ))}
+    </div>
   )
 }

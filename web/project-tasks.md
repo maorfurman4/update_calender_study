@@ -73,10 +73,10 @@
 
 ## Phase 5: Swipe UI
 
-- [ ] **P5-1:** Create `components/swipe/SwipeCard.tsx` — full-screen card using `framer-motion`. Tap cycles photos. Scroll reveals details. Green LIKE / Red NOPE overlays. Photo dots indicator
-- [ ] **P5-2:** Create `components/swipe/SwipeStack.tsx` — manages card stack (pre-loads next 3 cards). Handles `onSwipeLeft` (write swipe LEFT to DB) and `onSwipeRight` (write swipe RIGHT + open bot). Fetches paginated properties filtered by active user filters, excluding already-swiped
-- [ ] **P5-3:** Create `app/(main)/swipe/page.tsx` — renders SwipeStack with filter params from URL. Shows empty state when feed runs out ("אין עוד דירות")
-- [ ] **P5-4:** Create Supabase cron / Vercel Cron — daily at 00:00, resets swipes older than 10 days by deleting `direction='left'` rows where `swiped_at < NOW() - INTERVAL '10 days'`
+- [x] **P5-1:** Create `components/swipe/SwipeCard.tsx` — full-screen card using `framer-motion`. Drag physics with `useMotionValue` + `useTransform` for rotation. LIKE/PASS overlays fade in proportionally. Photo tap cycles array. Photo dots indicator
+- [x] **P5-2:** Create `components/swipe/SwipeDeck.tsx` — manages card stack (3 cards in DOM). Swipe left → `recordSwipe('left')`. Swipe right → `recordSwipe('right')` + `router.push('/bot/[id]')`. Empty state with refresh. Action buttons as alternatives to gestures
+- [x] **P5-3:** Create `app/swipe/page.tsx` — Server Component pre-fetches feed via `fetchSwipeFeed`. Passes to SwipeDeck client component. URL params (category, minRooms) forwarded from search page CTA. Skeleton loading state
+- [x] **P5-4:** Create `app/api/cron/recycle-swipes/route.ts` — deletes left-swipe rows older than 10 days (service-role, CRON_SECRET auth). `vercel.json` schedules it daily at 00:00 UTC
 
 ---
 
