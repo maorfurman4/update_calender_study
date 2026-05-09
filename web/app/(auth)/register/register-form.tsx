@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Loader2 } from 'lucide-react'
@@ -21,6 +21,14 @@ export function RegisterForm() {
   const tCommon = useTranslations('common')
 
   const [state, formAction, isPending] = useActionState(registerAction, null)
+
+  // Hard-navigate after successful registration so new session cookies are
+  // flushed before the next page renders (same pattern as login).
+  useEffect(() => {
+    if (state?.redirectTo) {
+      window.location.href = state.redirectTo
+    }
+  }, [state?.redirectTo])
 
   return (
     <Card className="w-full max-w-sm border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg">

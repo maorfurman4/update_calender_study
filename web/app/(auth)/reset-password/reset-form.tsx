@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,10 @@ export function ResetForm() {
   const tCommon = useTranslations('common')
 
   const [state, formAction, isPending] = useActionState(resetPasswordAction, null)
+
+  useEffect(() => {
+    if (state?.redirectTo) window.location.href = state.redirectTo
+  }, [state?.redirectTo])
 
   return (
     <Card className="w-full max-w-sm border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg">

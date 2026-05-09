@@ -1,0 +1,45 @@
+# Claude ignore file — prevents reading unnecessary directories
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Package manager locks (large, not useful for context)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Cache
+.cache/
+.turbo/
+*.tsbuildinfo
+
+# Environment (sensitive)
+.env
+.env.local
+.env.*.local
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Supabase local dev (large)
+supabase/.branches/
+supabase/.temp/
+
+# Public assets (binary, not useful for context)
+public/

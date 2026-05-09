@@ -37,6 +37,10 @@ CREATE TABLE IF NOT EXISTS public.users (
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Ensure new columns exist even if the table was created in a prior run
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_banned          BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS search_preferences JSONB;
+
 CREATE INDEX IF NOT EXISTS idx_users_is_banned
   ON public.users(is_banned) WHERE is_banned = TRUE;
 

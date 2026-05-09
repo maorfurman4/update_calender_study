@@ -34,6 +34,11 @@ const ResetSchema = z.object({
 export interface AuthResult {
   error?: string
   success?: string
+  // When set, the client form should do window.location.href = redirectTo
+  // (hard navigation) so the browser flushes stale cookies before rendering
+  // the next page. Do NOT use Next.js router.push() here — it is SPA nav and
+  // may not re-read the updated Set-Cookie headers from the action response.
+  redirectTo?: string
 }
 
 // ─── Login ────────────────────────────────────────────────────────────────────
@@ -56,12 +61,16 @@ export async function loginAction(
   const { error } = await supabase.auth.signInWithPassword(parsed.data)
 
   if (error) {
+    const msg = error.message.toLowerCase()
+    if (msg.includes('email not confirmed') || msg.includes('not confirmed')) {
+      return { error: 'נדרש אישור מייל — בדוק את תיבת הדואר ולחץ על הקישור לאישור' }
+    }
     return { error: 'האימייל או הסיסמה שגויים' }
   }
 
-  // Read redirect destination from form (hidden input set by login page)
+  // Signal the client to hard-navigate so Set-Cookie headers are flushed
   const next = (formData.get('next') as string) || '/swipe'
-  redirect(next.startsWith('/') ? next : '/swipe')
+  return { redirectTo: next.startsWith('/') ? next : '/swipe' }
 }
 
 // ─── Register ─────────────────────────────────────────────────────────────────
@@ -87,15 +96,11 @@ export async function registerAction(
   const { email, password, name, phone, role } = parsed.data
   const supabase = await createClient()
 
-  const { error } = await supabase.auth.signUp({
+  const { data: signUpData, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: {
-        full_name: name,
-        phone: phone ?? null,
-        role,
-      },
+      data: { full_name: name, phone: phone ?? null, role },
     },
   })
 
@@ -106,7 +111,25 @@ export async function registerAction(
     return { error: 'שגיאה בהרשמה, נסה שוב' }
   }
 
-  // Supabase sends a confirmation email; show success message
+  // Upsert into public.users immediately using the user returned by signUp
+  // (avoids a second round-trip and works whether or not email confirmation
+  // is enabled, since the user row is created either way).
+  const newUser = signUpData.user
+  if (newUser) {
+    await supabase.from('users').upsert(
+      { id: newUser.id, email, phone: phone ?? null, name, role },
+      { onConflict: 'id', ignoreDuplicates: false },
+    )
+  }
+
+  // Email confirmation is disabled → user is immediately signed in.
+  // Signal the client to hard-navigate to flush cookies.
+  // If confirmation is ever re-enabled, signUpData.session will be null
+  // and the user should be told to check their email instead.
+  if (signUpData.session) {
+    return { redirectTo: '/swipe' }
+  }
+
   return { success: 'נשלח אימייל אישור — בדוק את תיבת הדואר שלך' }
 }
 
@@ -115,6 +138,9 @@ export async function registerAction(
 export async function logoutAction(): Promise<void> {
   const supabase = await createClient()
   await supabase.auth.signOut()
+  // redirect() is fine here: logoutAction is called from a plain button,
+  // not via useActionState, so Next.js performs a proper server-side redirect
+  // and the browser makes a fresh request that re-reads the cleared cookies.
   redirect('/login')
 }
 
@@ -137,10 +163,7 @@ export async function oauthAction(
     provider,
     options: {
       redirectTo: `${origin}/auth/callback`,
-      queryParams: {
-        access_type: 'offline',
-        prompt: 'consent',
-      },
+      queryParams: { access_type: 'offline', prompt: 'consent' },
     },
   })
 
@@ -171,10 +194,7 @@ export async function forgotPasswordAction(
     redirectTo: `${origin}/auth/callback?next=/reset-password`,
   })
 
-  if (error) {
-    return { error: 'שגיאה בשליחת מייל האיפוס' }
-  }
-
+  if (error) return { error: 'שגיאה בשליחת מייל האיפוס' }
   return { success: 'נשלח לינק לאיפוס סיסמה — בדוק את תיבת הדואר' }
 }
 
@@ -191,13 +211,8 @@ export async function resetPasswordAction(
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.updateUser({
-    password: parsed.data.password,
-  })
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password })
 
-  if (error) {
-    return { error: 'שגיאה באיפוס הסיסמה' }
-  }
-
-  redirect('/swipe')
+  if (error) return { error: 'שגיאה באיפוס הסיסמה' }
+  return { redirectTo: '/swipe' }
 }
