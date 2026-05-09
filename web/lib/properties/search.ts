@@ -45,7 +45,7 @@ export async function searchPropertiesInPolygon({
 
   const { data, error } = await supabase.rpc('properties_in_polygon', {
     geojson,
-    p_category: category ?? null,
+    p_category: category ?? undefined,
     p_status: status,
   })
 

@@ -1,5 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+
+export const dynamic = 'force-dynamic'
 import { PageShell } from '@/components/shared/PageShell'
 import { BotChat } from '@/components/bot/BotChat'
 import type { Property } from '@/lib/supabase/types'

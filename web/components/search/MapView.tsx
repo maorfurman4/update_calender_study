@@ -35,7 +35,8 @@ async function polygonToGeoJson(
     const feature = turf.polygon([coords])
 
     // Ensure right-hand rule winding (PostGIS expects exterior ring counter-clockwise)
-    const rewindFeature = turf.rewind(feature, { reverse: true })
+    // Type assertion: turf.rewind preserves the Feature<Polygon> shape
+    const rewindFeature = turf.rewind(feature, { reverse: true }) as typeof feature
 
     return JSON.stringify(rewindFeature.geometry)
   } catch (err) {
@@ -81,6 +82,7 @@ export function MapView({
   const activePolygonRef = useRef<google.maps.Polygon | null>(null)
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const [isDrawing, setIsDrawing] = useState(false)
+  const [hasPolygon, setHasPolygon] = useState(false)   // mirrors activePolygonRef for render
   const [mapsReady, setMapsReady] = useState(false)
   const [initError, setInitError] = useState(false)
 
@@ -180,6 +182,24 @@ export function MapView({
   }, [properties, selectedId, mapsReady])
 
   // ── Drawing manager setup ──────────────────────────────────────────────────
+  // handleClear is declared BEFORE startDrawing so startDrawing can reference it
+  const handleClear = useCallback(() => {
+    // Remove drawing manager
+    if (drawingRef.current) {
+      drawingRef.current.setDrawingMode(null)
+      drawingRef.current.setMap(null)
+      drawingRef.current = null
+    }
+    // Remove polygon overlay
+    if (activePolygonRef.current) {
+      activePolygonRef.current.setMap(null)
+      activePolygonRef.current = null
+    }
+    setIsDrawing(false)
+    setHasPolygon(false)
+    onPolygonClear()
+  }, [onPolygonClear])
+
   const startDrawing = useCallback(async () => {
     if (!mapRef.current) return
 
@@ -216,6 +236,7 @@ export function MapView({
         setIsDrawing(false)
 
         activePolygonRef.current = polygon
+        setHasPolygon(true)
 
         // Extract path and convert to GeoJSON geometry
         const path = polygon.getPath().getArray()
@@ -226,23 +247,7 @@ export function MapView({
         }
       },
     )
-  }, [onPolygonComplete])
-
-  const handleClear = useCallback(() => {
-    // Remove drawing manager
-    if (drawingRef.current) {
-      drawingRef.current.setDrawingMode(null)
-      drawingRef.current.setMap(null)
-      drawingRef.current = null
-    }
-    // Remove polygon overlay
-    if (activePolygonRef.current) {
-      activePolygonRef.current.setMap(null)
-      activePolygonRef.current = null
-    }
-    setIsDrawing(false)
-    onPolygonClear()
-  }, [onPolygonClear])
+  }, [handleClear, onPolygonComplete])
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
@@ -270,7 +275,7 @@ export function MapView({
       {/* Draw / Clear polygon control */}
       {mapsReady && !initError && (
         <div className="absolute bottom-32 end-4 flex flex-col gap-2">
-          {!isDrawing && !activePolygonRef.current && (
+          {!isDrawing && !hasPolygon && (
             <button
               type="button"
               onClick={startDrawing}
@@ -293,7 +298,7 @@ export function MapView({
             </button>
           )}
 
-          {!isDrawing && activePolygonRef.current && (
+          {!isDrawing && hasPolygon && (
             <button
               type="button"
               onClick={handleClear}

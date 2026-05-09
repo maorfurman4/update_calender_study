@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { PageShell } from '@/components/shared/PageShell'
 import { NewPropertyForm } from './new-property-form'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'פרסם נכס — נדל״ן',
 }

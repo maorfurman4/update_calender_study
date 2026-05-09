@@ -4,6 +4,8 @@ import { PageShell } from '@/components/shared/PageShell'
 import { PropertiesTable } from '@/components/admin/PropertiesTable'
 import { getAdminProperties } from '@/lib/admin/actions'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * AdminPropertiesPage — searchable property moderation table with delete action.
  * Initial data server-fetched; subsequent searches use server actions.

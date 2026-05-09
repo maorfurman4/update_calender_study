@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { loginAction, oauthAction, type AuthResult } from '@/lib/auth/actions'
+import { loginAction, oauthAction } from '@/lib/auth/actions'
 
 // ─── OAuth provider button config ────────────────────────────────────────────
 
@@ -92,8 +92,6 @@ function OAuthButton({
 export function LoginForm({ next }: { next: string }) {
   const t = useTranslations('auth')
   const tCommon = useTranslations('common')
-  const tErrors = useTranslations('errors')
-
   const [state, formAction, isPending] = useActionState(loginAction, null)
 
   return (

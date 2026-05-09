@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
 import { PageShell } from '@/components/shared/PageShell'
+
+export const dynamic = 'force-dynamic'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ProfileForm } from '@/components/profile/ProfileForm'
 import { SearchPrefsForm } from '@/components/profile/SearchPrefsForm'

@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { Heart, Bed, Maximize2, MapPin } from 'lucide-react'
 import { PageShell } from '@/components/shared/PageShell'
 import { getFavorites } from '@/lib/profile/actions'
+
+export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 
 /**

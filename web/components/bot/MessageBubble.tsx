@@ -69,13 +69,15 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               )
             }
 
-            if (part.state === 'output-available' && (part as any).output?.approved) {
-              const output = (part as any).output as {
-                approved: boolean
-                summary: string
-                contact_phone: string | null
-                property_title: string
-              }
+            interface ApproveToolOutput {
+              approved: boolean
+              summary: string
+              contact_phone: string | null
+              property_title: string
+            }
+            const toolPart = part as unknown as { output?: ApproveToolOutput }
+            if (part.state === 'output-available' && toolPart.output?.approved) {
+              const output = toolPart.output
 
               return (
                 <ApprovalCard key={i} output={output} />

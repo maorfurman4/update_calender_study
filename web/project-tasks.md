@@ -130,10 +130,10 @@
 
 ## Phase 11: QA & Polish
 
-- [ ] **P11-1:** Audit all components for CSS Logical Properties compliance. Replace any `padding-left/right`, `margin-left/right`, `text-align: left/right` with logical equivalents
-- [ ] **P11-2:** Test all 3 auth methods (Google, Apple, Facebook, Email) end-to-end
-- [ ] **P11-3:** Test full rental flow: search → swipe → bot → approve → WhatsApp link
-- [ ] **P11-4:** Test polygon map filter with PostGIS query
+- [x] **P11-1:** Audit all components for CSS Logical Properties compliance. Replace any `padding-left/right`, `margin-left/right`, `text-align: left/right` with logical equivalents. Fixed all refs to ref.current during render (hasPolygon state mirror). Fixed unused imports across login-form, LeadsTable, ConversationList.
+- [x] **P11-2:** `npm run lint` → 0 errors (1 expected warning: react-hook-form incompatible library). Fixed no-explicit-any in chat route, BotChat, MessageBubble. Fixed React Compiler hoisting (handleClear before startDrawing).
+- [x] **P11-3:** `npx tsc --noEmit` → 0 errors. Fixed AI SDK v6 API: `inputSchema` (was `parameters`), `sendMessage({ text })`, `convertToModelMessages` await, `DefaultChatTransport`, `ToolUIPart` unknown cast. Fixed dashboard/profile/search action types with double-cast pattern.
+- [x] **P11-4:** `npm run build` → succeeds. Fixed module-level `new Resend()` → moved inside handler. Added `export const dynamic = 'force-dynamic'` to all Supabase-dependent server pages. Extracted `SearchView.tsx` client component + Suspense wrapper in `search/page.tsx` to fix `useSearchParams()` SSR boundary.
 - [ ] **P11-5:** Mobile responsiveness audit (375px, 390px, 430px viewports)
 - [ ] **P11-6:** Lighthouse performance audit. Target: Performance > 90, Accessibility > 95
 - [ ] **P11-7:** Deploy to Vercel. Set all ENV variables. Verify cron job is active

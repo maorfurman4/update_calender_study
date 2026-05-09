@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport } from 'ai'
 import { Send, Loader2, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { MessageBubble } from './MessageBubble'
@@ -34,15 +35,17 @@ export function BotChat({ property, greeting }: BotChatProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const { messages, sendMessage, status, error } = useChat({
-    api: '/api/chat',
-    // Extra body fields merged into every request
-    body: { propertyId: property.id },
-    // Seed the chat with the bot's opening greeting as a synthetic assistant message
-    initialMessages: [
+    // AI SDK v6: API endpoint + body go through DefaultChatTransport
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      body: { propertyId: property.id },
+    }),
+    // Seed with the bot's opening greeting as a synthetic assistant message
+    messages: [
       {
         id:    'greeting',
-        role:  'assistant',
-        parts: [{ type: 'text', text: greeting }],
+        role:  'assistant' as const,
+        parts: [{ type: 'text' as const, text: greeting }],
         createdAt: new Date(),
       },
     ],
@@ -55,13 +58,15 @@ export function BotChat({ property, greeting }: BotChatProps) {
 
   // ── Detect approval (for disabling the input after approval) ──────────────
   const isApproved = messages.some((m) =>
-    m.parts?.some(
-      (p) =>
-        isToolUIPart(p) &&
-        p.type === 'tool-approve_candidate' &&
-        p.state === 'output-available' &&
-        (p as any).output?.approved === true,
-    ),
+    m.parts?.some((p) => {
+      if (!isToolUIPart(p)) return false
+      const toolPart = p as unknown as { type: string; state: string; output?: { approved?: boolean } }
+      return (
+        toolPart.type === 'tool-approve_candidate' &&
+        toolPart.state === 'output-available' &&
+        toolPart.output?.approved === true
+      )
+    }),
   )
 
   const isStreaming = status === 'streaming' || status === 'submitted'
@@ -72,7 +77,7 @@ export function BotChat({ property, greeting }: BotChatProps) {
     const input = inputRef.current
     if (!input || !input.value.trim() || isStreaming || isApproved) return
 
-    sendMessage({ role: 'user', parts: [{ type: 'text', text: input.value.trim() }] })
+    sendMessage({ text: input.value.trim() })
     input.value = ''
     input.focus()
   }

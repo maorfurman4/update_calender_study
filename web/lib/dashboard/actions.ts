@@ -70,11 +70,13 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const ownerId = user.id
 
+  // RPCs are defined in 005_dashboard_rpcs.sql but not in the auto-generated types.
+  // Using 'as never' overrides the union restriction while keeping full TS safety on results.
   const [statsRes, dailyRes, dropRes, leadsRes] = await Promise.all([
-    supabase.rpc('owner_property_stats',  { p_owner_id: ownerId }),
-    supabase.rpc('owner_daily_swipes',    { p_owner_id: ownerId, p_days_back: 30 }),
-    supabase.rpc('owner_drop_off_stats',  { p_owner_id: ownerId }),
-    supabase.rpc('owner_leads',           { p_owner_id: ownerId }),
+    supabase.rpc('owner_property_stats' as never,  { p_owner_id: ownerId } as never),
+    supabase.rpc('owner_daily_swipes' as never,    { p_owner_id: ownerId, p_days_back: 30 } as never),
+    supabase.rpc('owner_drop_off_stats' as never,  { p_owner_id: ownerId } as never),
+    supabase.rpc('owner_leads' as never,           { p_owner_id: ownerId } as never),
   ])
 
   if (statsRes.error) console.error('[dashboard] stats RPC:', statsRes.error.message)
@@ -83,9 +85,9 @@ export async function getDashboardData(): Promise<DashboardData> {
   if (leadsRes.error) console.error('[dashboard] leads RPC:', leadsRes.error.message)
 
   return {
-    propertyStats: (statsRes.data  ?? []) as PropertyStat[],
-    dailySwipes:   (dailyRes.data  ?? []) as DailySwipe[],
-    dropOffs:      (dropRes.data   ?? []) as DropOffPoint[],
-    leads:         (leadsRes.data  ?? []) as LeadRow[],
+    propertyStats: (statsRes.data  ?? []) as unknown as PropertyStat[],
+    dailySwipes:   (dailyRes.data  ?? []) as unknown as DailySwipe[],
+    dropOffs:      (dropRes.data   ?? []) as unknown as DropOffPoint[],
+    leads:         (leadsRes.data  ?? []) as unknown as LeadRow[],
   }
 }

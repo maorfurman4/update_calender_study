@@ -4,6 +4,8 @@ import { PageShell } from '@/components/shared/PageShell'
 import { UsersTable } from '@/components/admin/UsersTable'
 import { getAdminUsers } from '@/lib/admin/actions'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * AdminUsersPage — searchable, ban/unban user moderation table.
  * Initial data server-fetched; subsequent searches use server actions.

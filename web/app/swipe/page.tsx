@@ -1,5 +1,7 @@
 import { Suspense } from 'react'
 import { PageShell } from '@/components/shared/PageShell'
+
+export const dynamic = 'force-dynamic'
 import { SwipeDeck } from '@/components/swipe/SwipeDeck'
 import { fetchSwipeFeed } from '@/lib/swipe/actions'
 import type { PropertyCategory } from '@/lib/supabase/types'

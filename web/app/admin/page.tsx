@@ -5,6 +5,8 @@ import { StatsGrid } from '@/components/admin/StatsGrid'
 import { KillSwitch } from '@/components/admin/KillSwitch'
 import { getAdminStats, getMaintenanceMode, getAuditLogs } from '@/lib/admin/actions'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * AdminDashboard — God Mode overview.
  *

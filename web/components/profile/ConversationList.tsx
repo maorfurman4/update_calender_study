@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { MessageCircle, CheckCircle2, XCircle, Clock, ArrowLeft } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import type { ConversationWithProperty } from '@/lib/profile/actions'
 
 interface ConversationListProps {

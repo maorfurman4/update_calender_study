@@ -72,13 +72,12 @@ function serviceDb() {
   )
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 // ---------------------------------------------------------------------------
 // Handler
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest) {
+  const resend = new Resend(process.env.RESEND_API_KEY)
   // ── Auth ─────────────────────────────────────────────────────────────────
   const authHeader = request.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET

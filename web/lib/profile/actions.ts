@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import type { AppUser, SearchPreferences } from '@/lib/supabase/types'
+import type { AppUser, Json, SearchPreferences } from '@/lib/supabase/types'
 
 // ─── Profile ───────────────────────────────────────────────────────────────────
 
@@ -60,7 +60,7 @@ export async function saveSearchPreferences(
 
   const { error } = await supabase
     .from('users')
-    .update({ search_preferences: clean })
+    .update({ search_preferences: clean as unknown as Json })
     .eq('id', user.id)
 
   if (error) return { error: error.message }
@@ -139,15 +139,15 @@ export async function getConversationHistory(): Promise<ConversationWithProperty
   if (error || !data) return []
 
   // Flatten the nested join shape
-  return data.map((row: any) => ({
-    id:          row.id,
-    status:      row.status,
-    track:       row.track,
-    created_at:  row.created_at,
-    updated_at:  row.updated_at,
-    property_id: row.property_id,
+  return data.map((row: Record<string, unknown>) => ({
+    id:          row.id as string,
+    status:      row.status as string,
+    track:       row.track as string,
+    created_at:  row.created_at as string,
+    updated_at:  row.updated_at as string,
+    property_id: row.property_id as string,
     property:    row.properties,
-  }))
+  })) as ConversationWithProperty[]
 }
 
 // ─── Favorites ─────────────────────────────────────────────────────────────────
@@ -192,10 +192,10 @@ export async function getFavorites(): Promise<FavoriteWithProperty[]> {
   if (error || !data) return []
 
   return data
-    .filter((row: any) => row.properties !== null)
-    .map((row: any) => ({
-      id:         row.id,
-      created_at: row.created_at,
+    .filter((row: Record<string, unknown>) => row.properties !== null)
+    .map((row: Record<string, unknown>) => ({
+      id:         row.id as string,
+      created_at: row.created_at as string,
       property:   row.properties,
-    }))
+    })) as FavoriteWithProperty[]
 }

@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Eye, ThumbsUp, MessageCircle, CheckCircle2, TrendingUp } from 'lucide-react'
+
+export const dynamic = 'force-dynamic'
 import { PageShell } from '@/components/shared/PageShell'
 import { KpiCard } from '@/components/owner/KpiCard'
 import { SwipeChart } from '@/components/owner/SwipeChart'

@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { buildSystemPrompt } from '@/lib/bot/prompts'
-import type { Database, UIMessage as AppUIMessage } from '@/lib/supabase/types'
+import type { Database, Json } from '@/lib/supabase/types'
 import type { UIMessage } from 'ai'
 
 /**
@@ -101,7 +101,7 @@ export async function POST(req: Request) {
   }
 
   // ── Build system prompt ─────────────────────────────────────────────────────
-  const systemPrompt = buildSystemPrompt(property as any)
+  const systemPrompt = buildSystemPrompt(property)
 
   // ── Service-role client for tool side-effects (bypasses RLS) ────────────────
   const serviceClient = createServiceClient<Database>(
@@ -109,11 +109,14 @@ export async function POST(req: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
 
+  // convertToModelMessages is async in AI SDK v6 — must be awaited before streamText
+  const modelMessages = await convertToModelMessages(messages)
+
   // ── Stream ──────────────────────────────────────────────────────────────────
   const result = streamText({
     model: openai('gpt-4o'),
     system: systemPrompt,
-    messages: convertToModelMessages(messages),
+    messages: modelMessages,
 
     // ── Tool: approve_candidate ───────────────────────────────────────────────
     // The LLM calls this when the candidate satisfies all screening conditions.
@@ -123,7 +126,7 @@ export async function POST(req: Request) {
       approve_candidate: tool({
         description:
           'Call this tool ONLY when the candidate has fully satisfied all screening conditions and should be connected to the property owner. Do not call it prematurely.',
-        parameters: z.object({
+        inputSchema: z.object({
           summary: z
             .string()
             .describe(
@@ -164,14 +167,17 @@ export async function POST(req: Request) {
       const rawMessages = response.messages.map((m) => ({
         role:      m.role,
         content:   Array.isArray(m.content)
-          ? m.content.map((c: any) => ('text' in c ? c.text : JSON.stringify(c))).join('')
+          ? m.content.map((c: unknown) => {
+              const part = c as Record<string, unknown>
+              return typeof part.text === 'string' ? part.text : JSON.stringify(c)
+            }).join('')
           : String(m.content),
         timestamp: new Date().toISOString(),
       }))
 
       await serviceClient
         .from('bot_conversations')
-        .update({ messages: rawMessages as any, updated_at: new Date().toISOString() })
+        .update({ messages: rawMessages as unknown as Json[], updated_at: new Date().toISOString() })
         .eq('id', conversationId)
     },
   })
