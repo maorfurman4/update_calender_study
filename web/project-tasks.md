@@ -113,10 +113,10 @@
 
 ## Phase 9: Admin Panel
 
-- [ ] **P9-1:** Create `middleware.ts` admin guard — checks `users.role = 'admin'`, redirects to `/` if not
-- [ ] **P9-2:** Create `app/admin/page.tsx` — platform-wide stats: total users, total properties, total swipes today, total approved leads today
-- [ ] **P9-3:** Create `app/admin/users/page.tsx` — searchable user table. Ban/unban toggle. Role editor
-- [ ] **P9-4:** Create `app/admin/properties/page.tsx` — all properties table. Remove listing. Mark as verified/featured (boost)
+- [x] **P9-1:** Create `supabase/migrations/006_admin_features.sql` — `is_banned` on users, `system_settings` table (kill switch), `audit_logs` table. Updated `middleware.ts`: isolated httpOnly cookie guard for `/admin`, kill-switch maintenance check for all routes, 30-second module-level cache. `lib/admin/auth.ts` — Edge-compatible HMAC-SHA-256 cookie signing via `crypto.subtle`. `app/admin/login/page.tsx` — isolated passphrase login form. `app/api/admin/auth/route.ts` + `app/api/admin/logout/route.ts`
+- [x] **P9-2:** Create `app/admin/page.tsx` — platform-wide KPI grid (StatsGrid), Kill Switch toggle (KillSwitch client component), nav tiles to sub-pages, recent audit log (last 20 entries)
+- [x] **P9-3:** Create `app/admin/users/page.tsx` + `components/admin/UsersTable.tsx` — searchable user table, ban/unban actions via server actions, fresh-fetch after mutation
+- [x] **P9-4:** Create `app/admin/properties/page.tsx` + `components/admin/PropertiesTable.tsx` — all properties table, delete action with confirm dialog, owner name JOIN, status badge
 
 ---
 

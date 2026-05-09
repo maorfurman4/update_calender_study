@@ -17,6 +17,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          id: string
+          action_type: string
+          target_id: string | null
+          details: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          action_type: string
+          target_id?: string | null
+          details?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          action_type?: string
+          target_id?: string | null
+          details?: Json | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       bot_conversations: {
         Row: {
           created_at: string
@@ -236,6 +260,24 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          id: number
+          maintenance_mode: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          maintenance_mode?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          maintenance_mode?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       roommate_profiles: {
         Row: {
           age: number | null
@@ -337,6 +379,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          is_banned: boolean
           name: string
           phone: string | null
           role: string
@@ -347,6 +390,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id: string
+          is_banned?: boolean
           name?: string
           phone?: string | null
           role?: string
@@ -357,6 +401,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_banned?: boolean
           name?: string
           phone?: string | null
           role?: string
