@@ -3,7 +3,7 @@
 import { useActionState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Mail, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -30,6 +30,62 @@ export function RegisterForm() {
     }
   }, [state?.redirectTo])
 
+  // ── Premium "check your inbox" success screen ──────────────────────────
+  if (state?.success === 'confirm_email') {
+    return (
+      <Card className="w-full max-w-sm border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg overflow-hidden">
+        {/* Decorative top bar */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-[var(--color-primary)] via-[var(--color-accent)] to-[var(--color-primary)]" />
+
+        <CardContent className="flex flex-col items-center gap-5 pt-8 pb-8 text-center" dir="rtl">
+          {/* Icon */}
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center">
+              <Mail className="w-9 h-9 text-[var(--color-primary)]" strokeWidth={1.5} />
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm">
+              <CheckCircle2 className="w-4 h-4 text-white" strokeWidth={2.5} />
+            </div>
+          </div>
+
+          {/* Headline */}
+          <div className="flex flex-col gap-1.5">
+            <h2 className="text-xl font-bold text-[var(--color-dark)]">
+              {t('confirm_email_title')}
+            </h2>
+            <p className="text-sm text-[var(--color-muted)] leading-relaxed max-w-[240px]">
+              {t('confirm_email_body')}
+            </p>
+          </div>
+
+          {/* Steps */}
+          <div className="w-full rounded-xl bg-[var(--color-bg)] border border-[var(--color-border)] divide-y divide-[var(--color-border)] text-right">
+            {[
+              { n: '1', label: t('confirm_step_1') },
+              { n: '2', label: t('confirm_step_2') },
+              { n: '3', label: t('confirm_step_3') },
+            ].map(({ n, label }) => (
+              <div key={n} className="flex items-center gap-3 px-4 py-3">
+                <span className="w-6 h-6 shrink-0 rounded-full bg-[var(--color-primary)] text-white text-xs font-bold flex items-center justify-center">
+                  {n}
+                </span>
+                <span className="text-sm text-[var(--color-dark)]">{label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Back to login */}
+          <Link
+            href="/login"
+            className="text-sm font-semibold text-[var(--color-primary)] hover:underline underline-offset-2"
+          >
+            {t('back_to_login')}
+          </Link>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="w-full max-w-sm border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg">
       <CardHeader className="text-center pb-2">
@@ -50,16 +106,6 @@ export function RegisterForm() {
 
       <CardContent>
         <form action={formAction} className="flex flex-col gap-3">
-          {/* Success banner */}
-          {state?.success && (
-            <div
-              role="status"
-              className="rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-700 text-center"
-            >
-              {state.success}
-            </div>
-          )}
-
           {/* Error banner */}
           {state?.error && (
             <div

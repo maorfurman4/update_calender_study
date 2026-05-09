@@ -105,15 +105,16 @@ export async function registerAction(
   })
 
   if (error) {
-    if (error.message.toLowerCase().includes('already registered')) {
-      return { error: 'כתובת האימייל כבר קיימת במערכת' }
+    const msg = error.message.toLowerCase()
+    if (msg.includes('already registered') || msg.includes('user already exists')) {
+      return {
+        error: 'חשבון זה כבר קיים במערכת. אנא התחבר או שחזר סיסמה.',
+      }
     }
     return { error: 'שגיאה בהרשמה, נסה שוב' }
   }
 
-  // Upsert into public.users immediately using the user returned by signUp
-  // (avoids a second round-trip and works whether or not email confirmation
-  // is enabled, since the user row is created either way).
+  // Upsert into public.users immediately using the user returned by signUp.
   const newUser = signUpData.user
   if (newUser) {
     await supabase.from('users').upsert(
@@ -122,15 +123,15 @@ export async function registerAction(
     )
   }
 
-  // Email confirmation is disabled → user is immediately signed in.
-  // Signal the client to hard-navigate to flush cookies.
-  // If confirmation is ever re-enabled, signUpData.session will be null
-  // and the user should be told to check their email instead.
+  // Email confirmation is ON — session will be null until the user clicks
+  // the confirmation link. Show a polished "check your inbox" success state.
+  // If confirmation is ever turned OFF, session will be non-null and we
+  // redirect immediately instead.
   if (signUpData.session) {
     return { redirectTo: '/swipe' }
   }
 
-  return { success: 'נשלח אימייל אישור — בדוק את תיבת הדואר שלך' }
+  return { success: 'confirm_email' }
 }
 
 // ─── Logout ───────────────────────────────────────────────────────────────────

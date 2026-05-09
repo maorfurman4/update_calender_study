@@ -52,7 +52,13 @@
     "role_both": "שניהם",
     "terms": "בהרשמה אתה מסכים לתנאי השימוש",
     "email_placeholder": "name@example.com",
-    "password_placeholder": "לפחות 6 תווים"
+    "password_placeholder": "לפחות 6 תווים",
+    "confirm_email_title": "בדוק את תיבת הדואר שלך",
+    "confirm_email_body": "שלחנו לך קישור לאישור — לחץ עליו כדי להפעיל את החשבון ולהתחיל לגלוש בנכסים",
+    "confirm_step_1": "פתח את תיבת הדואר הנכנס",
+    "confirm_step_2": "חפש מייל מ־NADLAN ולחץ על \"אשר חשבון\"",
+    "confirm_step_3": "תיכנס אוטומטית לפלטפורמה",
+    "back_to_login": "חזרה לדף הכניסה"
   },
 
   "tracks": {
