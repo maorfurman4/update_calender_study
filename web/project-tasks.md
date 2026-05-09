@@ -82,14 +82,14 @@
 
 ## Phase 6: AI Bot Gatekeeper (3 Tracks)
 
-- [ ] **P6-1:** Create `lib/openai/prompts/rental-prompt.ts` — system prompt for rental track. Fixed questions: budget (incl. arnona+vaad), pets, move-in date. Decision: approve → `APPROVED` / reject → `REJECTED: [reason]`
-- [ ] **P6-2:** Create `lib/openai/prompts/sales-prompt.ts` — system prompt for sales track. Questions: mortgage pre-approval, eviction timeline. Presents Tabu data (sqm, directions, parking). Decision logic same
-- [ ] **P6-3:** Create `lib/openai/prompts/roommates-prompt.ts` — system prompt for roommates track. Questions: sleep schedule, cleanliness level (1-5), smoking, hosting habits, pets. Matches against profile tags
-- [ ] **P6-4:** Create `lib/openai/decision-parser.ts` — parses GPT response for `APPROVED` / `REJECTED: reason`. Handles edge cases
-- [ ] **P6-5:** Create `app/api/bot/route.ts` — SSE streaming endpoint. Receives `{propertyId, messages, track}`. Loads correct system prompt. Streams GPT-4o response. On `APPROVED`: writes lead to DB, returns WhatsApp deep link. On `REJECTED`: writes rejection + reason
-- [ ] **P6-6:** Create `components/bot/BotBubble.tsx` — bottom sheet (mobile) / side panel (desktop). Chat UI with streaming message display. Shows typing indicator. On approval: renders WhatsApp CTA button (`https://wa.me/[phone]?text=[prefilled_message]`). On rejection: shows reason + "חזור לחיפוש" button that navigates back to swipe
-- [ ] **P6-7:** Create `components/bot/MessageBubble.tsx` — styled chat bubble (user right, bot left). RTL-aware using CSS logical properties
-- [ ] **P6-8:** Wire `BotBubble` into `SwipeStack` — opens automatically on `onSwipeRight`. Saves `bot_conversation` record on open
+- [x] **P6-1:** Create `lib/bot/prompts.ts` — `buildSystemPrompt(property)` returns track-specific gatekeeper prompt. Rental: budget/pets/date. Sale: mortgage pre-approval, eviction, financing. Roommates: sleep, cleanliness, smoking, hosting. All tracks instruct LLM to call `approve_candidate` tool, never approve via text
+- [x] **P6-2:** *(merged into P6-1)* Sale track prompt in `lib/bot/prompts.ts` — professional consultant persona, Tabu data highlighted
+- [x] **P6-3:** *(merged into P6-1)* Roommates track prompt — friendly screener persona, holistic compatibility assessment
+- [x] **P6-4:** *(replaced by tool calling)* Approval detection via `approve_candidate` tool invocation — no text parsing needed; structured output eliminates false positives
+- [x] **P6-5:** Create `app/api/chat/route.ts` — Vercel AI SDK v6 `streamText` + `convertToModelMessages`. `approve_candidate` tool: updates `bot_conversations.status='approved'` + upserts `leads` row via service-role client. `onFinish` persists messages. Returns `toUIMessageStreamResponse()`
+- [x] **P6-6:** Create `components/bot/BotChat.tsx` — `useChat` from `@ai-sdk/react` v3. Full-viewport chat with property header, message list, typing dots, WhatsApp CTA surfaced via `ApprovalCard` in `MessageBubble`. Input disabled after approval
+- [x] **P6-7:** Create `components/bot/MessageBubble.tsx` — renders `TextUIPart` as styled bubbles (user inline-end / bot inline-start, RTL logical), tool parts as `ApprovalCard` with WhatsApp deep link
+- [x] **P6-8:** `app/bot/[propertyId]/page.tsx` — Server Component: auth check, property fetch, existing-approval redirect, track greeting. Wired to SwipeDeck via `router.push('/bot/[id]')` on right swipe
 
 ---
 
