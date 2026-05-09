@@ -102,12 +102,12 @@
 
 ## Phase 8: Owner Dashboard
 
-- [ ] **P8-1:** Create Supabase DB view or RPC `owner_property_stats` — returns per-property: total_views, right_swipe_count, right_swipe_rate, conversations_started, approved_leads, drop_off_by_question
-- [ ] **P8-2:** Create `components/owner/KpiCard.tsx` — single metric card with trend indicator
-- [ ] **P8-3:** Create `components/owner/FunnelChart.tsx` — Recharts funnel: Views → Right Swipes → Bot Started → Approved. Shows absolute numbers + percentages
-- [ ] **P8-4:** Create `components/owner/DropOffChart.tsx` — bar chart showing which bot question caused the most drop-offs (parsed from `bot_conversations.messages`)
-- [ ] **P8-5:** Create `components/owner/LeadsTable.tsx` — paginated table of approved leads: tenant name, phone, timestamp, property
-- [ ] **P8-6:** Create `app/owner/dashboard/page.tsx` — combines all dashboard components. Property selector dropdown if owner has multiple listings. Real-time via Supabase Realtime subscription on `leads` table
+- [x] **P8-1:** `005_dashboard_rpcs.sql` — 4 Postgres SECURITY DEFINER RPCs: `owner_property_stats` (views/rights/conversion/bot_started/approved), `owner_daily_swipes` (30-day time series), `owner_drop_off_stats` (JSONB[] unnest CTE to find last assistant message before stall), `owner_leads` (approved leads JOIN users JOIN properties)
+- [x] **P8-2:** `components/owner/KpiCard.tsx` — metric card with icon, accent variant (brown bg for approved leads)
+- [x] **P8-3:** `components/owner/FunnelChart.tsx` — recharts FunnelChart (v3.8.1) with 4 stages: Views→Right Swipes→Bot Started→Approved. Brown-palette Cell colors
+- [x] **P8-4:** `components/owner/DropOffList.tsx` — ranked list of stall points with heat-bar proportional to drop_count. Data from owner_drop_off_stats RPC (JSONB[] parsing in Postgres)
+- [x] **P8-5:** `components/owner/LeadsTable.tsx` — approved leads with tel/mailto/WhatsApp deep links per renter. `components/owner/SwipeChart.tsx` — recharts LineChart 30-day right vs left swipes
+- [x] **P8-6:** `app/owner/dashboard/page.tsx` — Server Component, parallel 4-RPC fetch, KPI grid, multi-property strip, SwipeChart, FunnelChart (primary property), DropOffList, LeadsTable
 
 ---
 
