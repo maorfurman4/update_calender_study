@@ -562,7 +562,7 @@ def analyze_trash_priority(email: dict) -> str:
 
 # 2. הפונקציה שאוספת את המיילים
 def fetch_potential_trash(gmail) -> list[dict]:
-    query = f'in:anywhere (label:spam OR category:promotions OR category:updates OR "פרסומת" OR "מבצע") -label:{CLEANER_LABEL_NAME}'
+    query = f'in:anywhere (label:spam OR category:promotions OR category:updates OR "פרסומת" OR "מבצע" OR from:alibaba.com OR from:agentskills.co.il) -label:{CLEANER_LABEL_NAME}'
     print(f"🧹 DEBUG: Searching for trash with query: {query}")
     emails = []
     page_token = None
